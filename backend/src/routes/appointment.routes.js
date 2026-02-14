@@ -1,6 +1,8 @@
 import express from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import roleMiddleware from "../middlewares/role.middleware.js";
+import { generateConsultationToken } from "../controllers/appointment.controller.js";
+
 
 import {
   bookOnlineAppointment,
@@ -24,5 +26,12 @@ router.get(
   roleMiddleware("HOSPITAL", "ADMIN"),
   getHospitalAppointments
 );
+
+router.get(
+  "/:appointmentId/token",
+  authMiddleware,
+  generateConsultationToken
+);
+
 
 export default router;

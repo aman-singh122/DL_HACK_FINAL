@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { getAppointmentById, cancelOpd } from "@/api/opd.api";
+
 import {
   Calendar,
   Clock,
@@ -119,7 +120,7 @@ const AppointmentDetail = () => {
       fetchDetails(); // Refresh state
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || "Server rejected cancellation request."
+        err?.response?.data?.message || "Server rejected cancellation request.",
       );
     } finally {
       setCancelLoading(false);
@@ -184,7 +185,7 @@ const AppointmentDetail = () => {
               <p className="text-emerald-50 text-xl opacity-90 max-w-2xl">
                 Your consultation with{" "}
                 <span className="font-bold underline">
-                   {appointment.doctor?.doctorName}
+                  {appointment.doctor?.doctorName}
                 </span>{" "}
                 is confirmed. Reference:{" "}
                 <span className="font-mono bg-black/20 px-2 rounded">
@@ -217,20 +218,22 @@ const AppointmentDetail = () => {
           {/* NAVIGATION & ACTIONS */}
           <div className="flex flex-wrap justify-between items-center py-8 gap-4 print:hidden">
             <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="rounded-full bg-white shadow-sm border border-slate-200"
+              onClick={() => navigate(`/room/${appointment.appointmentId}`)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 
+  text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 
+  hover:shadow-blue-500/30 hover:scale-105 active:scale-95"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to List
+              <Video className="mr-2 h-5 w-5" />
+              Enter Consultation
             </Button>
 
             <div className="flex gap-3">
               {isOnline && ["booked", "confirmed"].includes(status) && (
                 <Button
                   onClick={() =>
-                 window.open(`http://localhost:8080/room/${appointment._id}`, "_blank")
+                  navigate(`/room/${appointment.appointmentId}`)
                   }
-                  className="rounded-full px-8 shadow-lg bg-blue-600 hover:bg-blue-700 animate-pulse"
+                  // className="rounded-full px-8 shadow-lg bg-blue-600 hover:bg-blue-700 animate-pulse"
                 >
                   <Video className="mr-2" size={18} />
                   Enter Consultation
@@ -295,8 +298,8 @@ const AppointmentDetail = () => {
                           status === "confirmed"
                             ? "bg-emerald-500"
                             : status === "cancelled"
-                            ? "bg-red-500"
-                            : "bg-amber-500"
+                              ? "bg-red-500"
+                              : "bg-amber-500"
                         }`}
                       >
                         {status}
@@ -338,7 +341,7 @@ const AppointmentDetail = () => {
                         <div className="flex items-center gap-3 font-bold text-slate-700">
                           <Calendar size={18} className="text-blue-500" />
                           {new Date(
-                            appointment.schedule.date
+                            appointment.schedule.date,
                           ).toLocaleDateString()}
                         </div>
                         <div className="flex items-center gap-3 font-bold text-slate-700">

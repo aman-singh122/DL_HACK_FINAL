@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import triageRoutes from "./ai/routes/triage.routes.js";
 
 /* ================= ROUTES ================= */
 import authRoutes from "./routes/auth.routes.js";
@@ -68,6 +69,10 @@ app.use("/api/notifications", notificationRoutes);
 
 // LOCATION
 app.use("/api/location", locationRoutes);
+
+// AI TRIAGE
+app.use("/api/ai", triageRoutes);
+
 
 // APPOINTMENTS
 app.use("/api/appointments", appointmentRoutes);

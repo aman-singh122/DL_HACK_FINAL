@@ -1,25 +1,48 @@
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { LiveKitRoom, VideoConference } from "@livekit/components-react";
+import "@livekit/components-styles";
 
-const Room = () => {
-  const { id } = useParams<{ id: string }>();
+import axios from "../../lib/axios";
+
+export default function Room() {
+  const { appointmentId } = useParams();
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const response = await axios.get(
+          `/appointments/${appointmentId}/token`
+        );
+
+        setToken(response.data.token);
+      } catch (error) {
+        console.error("Failed to fetch token", error);
+      }
+    };
+
+    if (appointmentId) fetchToken();
+  }, [appointmentId]);
+
+  if (!token) {
+    return <div>Loading consultation...</div>;
+  }
+  console.log("TOKEN VALUE:", token);
+console.log("TOKEN TYPE:", typeof token);
+console.log("LIVEKIT URL:", import.meta.env.VITE_LIVEKIT_URL);
+
+
 
   return (
-    <div className="w-screen h-screen bg-slate-900 flex items-center justify-center">
-      
-      {/* Video Wrapper */}
-      <div className="w-full max-w-5xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
-        <iframe
-          src={`http://localhost:3000?roomId=${id}`}
-          title="Video Consultation Room"
-          allow="camera; microphone"
-          allowFullScreen
-          className="w-full h-full border-none"
-        />
-      </div>
-
-    </div>
+    <LiveKitRoom
+      token={token}
+      serverUrl={import.meta.env.VITE_LIVEKIT_URL}
+      connect={true}
+      video={true}
+      audio={true}
+    >
+      <VideoConference />
+    </LiveKitRoom>
   );
-};
-
-export default Room;
-
+}

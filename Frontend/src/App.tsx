@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import MediAI from "@/pages/MediAI";
+
 
 /* ================= CONTEXT ================= */
 import { NotificationProvider } from "@/context/NotificationContext";
@@ -115,7 +117,7 @@ const App = () => {
 
             {/* ================= VIDEO CONSULTATION ================= */}
             <Route
-              path="/room/:id"
+              path="/room/:appointmentId"
               element={
                 <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
                   <Room />
@@ -158,6 +160,9 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+
+                <Route path="/medichat" element={<MediAI />} />
+
 
             {/* ================= 🏥 HOSPITAL ROUTES ================= */}
             <Route

@@ -1,6 +1,7 @@
 import Appointment from "../models/Appointment.js";
 import Doctor from "../models/Doctor.js";
 import Hospital from "../models/Hospital.js";
+import { generateLiveKitToken } from "../services/livekit.service.js";
 
 /* =====================================================
    BOOK ONLINE CONSULTATION (PATIENT ONLY) ✅ FINAL FIX
@@ -184,6 +185,83 @@ export const getHospitalAppointments = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ HOSPITAL APPOINTMENTS ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+/* =====================================================
+   GENERATE LIVE CONSULTATION TOKEN (DOCTOR / PATIENT)
+   ===================================================== */
+export const generateConsultationToken = async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user",
+      });
+    }
+
+    const { appointmentId } = req.params;
+
+    /* ---------------- FIND APPOINTMENT ---------------- */
+    const appointment = await Appointment.findOne({
+      appointmentId,
+    });
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    /* ---------------- CHECK STATUS ---------------- */
+    if (appointment.status !== "booked") {
+      return res.status(400).json({
+        success: false,
+        message: "Consultation not active",
+      });
+    }
+
+    /* ---------------- CHECK ROLE ACCESS ---------------- */
+    const isPatient =
+      appointment.patient.userId.toString() === req.user._id.toString();
+
+    const isDoctor =
+      appointment.doctor.doctorId.toString() === req.user._id.toString();
+
+    if (!isPatient && !isDoctor) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to join this consultation",
+      });
+    }
+
+    /* ---------------- GENERATE TOKEN ---------------- */
+    const roomName = appointment.appointmentId; // Room name = appointmentId
+    const identity = req.user._id.toString();
+
+
+   const token = await generateLiveKitToken(roomName, identity);
+
+console.log("FINAL TOKEN:", token);
+console.log("TYPE:", typeof token);
+console.log("ROOM NAME:", roomName);
+console.log("IDENTITY:", identity);
+    console.log("TOKEN FROM SERVICE:", token);
+console.log("TYPE FROM SERVICE:", typeof token);
+
+    return res.status(200).json({
+      success: true,
+      token,
+      roomName,
+    });
+  } catch (error) {
+    console.error("❌ TOKEN GENERATION ERROR:", error);
     return res.status(500).json({
       success: false,
       message: error.message,
