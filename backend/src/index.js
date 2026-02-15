@@ -3,6 +3,7 @@ import "dotenv/config";
 
 import http from "http";
 import { Server } from "socket.io";
+import { startAIConsumer } from "./infrastructure/kafka/consumers/ai.consumer.js";
 
 import app from "./app.js";
 import main from "./config/db.js";
@@ -48,16 +49,22 @@ async function startServer() {
     await main();
     console.log("MongoDB Connected ✅");
 
-    // await redisClient.connect();
-    // console.log("Redis Connected ✅");
-
     server.listen(PORT, () => {
       console.log(`Server started on port ${PORT}`);
     });
+
+    // Start Kafka in background
+    // startAIConsumer()
+      // .then(() => console.log("Kafka Consumer Started ✅"))
+      // .catch((err) =>
+      //   console.error("Kafka Consumer Failed ❌", err)
+      // );
+
   } catch (err) {
     console.error("Server startup failed ❌", err);
     process.exit(1);
   }
 }
+
 
 startServer();

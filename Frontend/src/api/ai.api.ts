@@ -10,3 +10,8 @@ export const runTriageAI = (data: {
 }) => {
   return API.post("/ai/triage", data);
 };
+
+
+export const getTriageHistory = () => {
+  return API.get("/ai/history");
+};

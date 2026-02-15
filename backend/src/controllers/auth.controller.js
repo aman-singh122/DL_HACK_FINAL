@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import redisClient from "../config/redis.js";
+import redisClient from "../infrastructure/cache/redis.client.js";
 
 /* ===================== REGISTER ===================== */
 export const register = async (req, res) => {

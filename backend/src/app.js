@@ -2,6 +2,10 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import triageRoutes from "./ai/routes/triage.routes.js";
+import reportRoutes from "./modules/analytics/report.routes.js";
+import chatRoutes from "./modules/chat/chat.routes.js";
+
+
 
 /* ================= ROUTES ================= */
 import authRoutes from "./routes/auth.routes.js";
@@ -73,10 +77,12 @@ app.use("/api/location", locationRoutes);
 // AI TRIAGE
 app.use("/api/ai", triageRoutes);
 
-
+app.use("/api/analytics", reportRoutes);
+app.use("/api/chat", chatRoutes);
 // APPOINTMENTS
 app.use("/api/appointments", appointmentRoutes);
 
+app.use("/api/chat", chatRoutes);
 /* ================= ERROR HANDLER (LAST) ================= */
 app.use(errorMiddleware);
 

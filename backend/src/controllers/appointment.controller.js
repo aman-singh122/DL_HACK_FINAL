@@ -2,6 +2,7 @@ import Appointment from "../models/Appointment.js";
 import Doctor from "../models/Doctor.js";
 import Hospital from "../models/Hospital.js";
 import { generateLiveKitToken } from "../services/livekit.service.js";
+import { produceAIEvent } from "../infrastructure/kafka/producers/ai.producer.js";
 
 /* =====================================================
    BOOK ONLINE CONSULTATION (PATIENT ONLY) ✅ FINAL FIX
@@ -129,6 +130,22 @@ export const bookOnlineAppointment = async (req, res) => {
       },
     });
 
+    // 🔥 Kafka event
+// await produceAIEvent({
+//   type: "APPOINTMENT_BOOKED",
+//   userId: appointment.patient.userId,
+//   appointmentId: appointment._id,
+//   hospitalId: appointment.hospital.hospitalId,
+//   doctorId: appointment.doctor.doctorId,
+//   timestamp: new Date(),
+// });
+
+// res.status(201).json({
+//   success: true,
+//   data: appointment,
+// });
+
+
     return res.status(201).json({
       success: true,
       message: "Online consultation booked successfully",
@@ -142,6 +159,9 @@ export const bookOnlineAppointment = async (req, res) => {
     });
   }
 };
+
+
+
 
 /* =====================================================
    GET HOSPITAL APPOINTMENTS (HOSPITAL ONLY)
