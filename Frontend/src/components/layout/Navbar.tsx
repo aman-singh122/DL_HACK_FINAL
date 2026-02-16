@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Heart, Languages } from "lucide-react";
 import { useState } from "react";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useLanguage } from "@/context/LanguageContext";
 
 const Navbar = () => {
@@ -32,16 +31,16 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-sm">
       <div className="container flex h-16 items-center justify-between">
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary shadow-md group-hover:shadow-lg transition-shadow">
-            <Heart className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 shadow-md group-hover:shadow-lg transition-shadow">
+            <Heart className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-display font-bold text-foreground">
-            Medo<span className="text-primary">sphere</span>
+          <span className="text-xl font-bold text-gray-900">
+            Medo<span className="text-blue-600">sphere</span>
           </span>
         </Link>
 
@@ -51,10 +50,10 @@ const Navbar = () => {
             <Link
               key={link.path}
               to={link.path}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
                 isActive(link.path)
-                  ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
               }`}
             >
               {link.name[language]}
@@ -62,29 +61,34 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Right Section (Theme + Language + Auth) */}
+        {/* Right Section (Language + Auth) */}
         <div className="hidden md:flex items-center gap-3">
-          {/* 🌐 Language Toggle */}
+          {/* Language Toggle */}
           <Button
             variant="ghost"
             size="sm"
             onClick={toggleLanguage}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-semibold"
           >
             <Languages className="h-4 w-4" />
             {language === "en" ? "हिंदी" : "EN"}
           </Button>
 
-          {/* 🌗 Theme Toggle */}
-          <ThemeToggle />
-
           {/* Auth Buttons */}
-          <Button variant="ghost" asChild>
+          <Button 
+            variant="ghost" 
+            asChild
+            className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-semibold"
+          >
             <Link to="/login">
               {language === "en" ? "Login" : "लॉगिन"}
             </Link>
           </Button>
-          <Button variant="default" asChild>
+          <Button 
+            variant="default" 
+            asChild
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md"
+          >
             <Link to="/register">
               {language === "en" ? "Register" : "रजिस्टर"}
             </Link>
@@ -93,7 +97,7 @@ const Navbar = () => {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden p-2 rounded-lg hover:bg-secondary transition-colors"
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
         >
@@ -103,16 +107,16 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden border-t border-border bg-card animate-fade-in">
+        <div className="md:hidden border-t border-gray-200 bg-white animate-fade-in">
           <nav className="container py-4 space-y-2">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                className={`block px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
                   isActive(link.path)
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    ? "text-blue-600 bg-blue-50"
+                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 onClick={() => setIsOpen(false)}
               >
@@ -121,12 +125,12 @@ const Navbar = () => {
             ))}
 
             {/* Mobile Actions */}
-            <div className="pt-4 border-t border-border space-y-3">
+            <div className="pt-4 border-t border-gray-200 space-y-3">
 
-              {/* 🌐 Language Toggle (Mobile) */}
+              {/* Language Toggle (Mobile) */}
               <Button
                 variant="outline"
-                className="w-full flex items-center gap-2"
+                className="w-full flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold"
                 onClick={toggleLanguage}
               >
                 <Languages className="h-4 w-4" />
@@ -135,18 +139,21 @@ const Navbar = () => {
                   : "अंग्रेज़ी में बदलें"}
               </Button>
 
-              {/* 🌗 Theme Toggle (Mobile) */}
-              <div className="flex justify-center">
-                <ThemeToggle />
-              </div>
-
-              <Button variant="outline" className="w-full" asChild>
+              <Button 
+                variant="outline" 
+                className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold" 
+                asChild
+              >
                 <Link to="/login" onClick={() => setIsOpen(false)}>
                   {language === "en" ? "Login" : "लॉगिन"}
                 </Link>
               </Button>
 
-              <Button variant="default" className="w-full" asChild>
+              <Button 
+                variant="default" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold" 
+                asChild
+              >
                 <Link to="/register" onClick={() => setIsOpen(false)}>
                   {language === "en" ? "Register" : "रजिस्टर"}
                 </Link>
