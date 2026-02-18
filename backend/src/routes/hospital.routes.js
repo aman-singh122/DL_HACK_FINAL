@@ -6,7 +6,7 @@ import {
   getMyHospitalProfile,
   assignHospitalAdmin,
   getHospitalPatients,   // ✅ ADD
-  getHospitalDoctors     // ✅ ADD
+  getHospitalDoctors           // ✅ ADD
 } from "../controllers/hospital.controller.js";
 
 
@@ -15,7 +15,7 @@ import roleMiddleware from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
-/* ================= HOSPITAL SELF PROFILE ================= */
+/* ================= HOSPITAL SELF PROFILE ============ */
 /* 🔥 MUST BE ABOVE "/:id" */
 router.get(
   "/me",

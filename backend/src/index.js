@@ -55,13 +55,13 @@ async function startServer() {
 
     // Start Kafka in background
     // startAIConsumer()
-      // .then(() => console.log("Kafka Consumer Started ✅"))
+      // .then(() => console.log("Kafka Consumer Started"))
       // .catch((err) =>
-      //   console.error("Kafka Consumer Failed ❌", err)
+      //   console.error("Kafka Consumer Failed ", err)
       // );
 
   } catch (err) {
-    console.error("Server startup failed ❌", err);
+    console.error("Server startup failed ", err);
     process.exit(1);
   }
 }
