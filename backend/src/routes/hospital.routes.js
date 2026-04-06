@@ -6,7 +6,7 @@ import {
   getMyHospitalProfile,
   assignHospitalAdmin,
   getHospitalPatients,   // ✅ ADD
-  getHospitalDoctors           // ✅ ADD
+  getHospitalDoctors    // ✅ ADD
 } from "../controllers/hospital.controller.js";
 
 

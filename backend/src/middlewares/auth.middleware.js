@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
+
 const authMiddleware = async (req, res, next) => {
   try {
     let token;
@@ -12,7 +13,7 @@ const authMiddleware = async (req, res, next) => {
       token = authHeader.split(" ")[1];
     }
 
-    // ❌ TOKEN NOT FOUND (NO CHANGE)
+    //  TOKEN NOT FOUND (NO CHANGE)
     if (!token) {
       return res.status(401).json({
         success: false,

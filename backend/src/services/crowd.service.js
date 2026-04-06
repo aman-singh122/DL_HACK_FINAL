@@ -1,5 +1,5 @@
 export const calculateCrowdLevel = ({ bookedTokens }) => {
-  if (bookedTokens >= 6) {
+  if (bookedTokens >=4 ) {
     return {
       level: "HIGH",
       badgeClass: "bg-rose-100 text-rose-700",
@@ -10,7 +10,7 @@ export const calculateCrowdLevel = ({ bookedTokens }) => {
 
 
 
-  if (bookedTokens >= 4) {
+  if (bookedTokens >= 3) {
     return {
       level: "MEDIUM",
       badgeClass: "bg-amber-100 text-amber-700",

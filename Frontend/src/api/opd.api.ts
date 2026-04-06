@@ -28,18 +28,18 @@ export interface BookOpdPayload {
   source?: "web" | "mobile" | "kiosk";
 }
 
-/* 🔥 BOOK OPD */
+/*  BOOK OPD */
 export const bookOpd = (data: BookOpdPayload) =>
   API.post("/opd/book", data);
 
-/* 🔥 MY APPOINTMENTS */
+/*  MY APPOINTMENTS */
 export const getMyAppointments = () =>
   API.get("/opd/my-appointments");
 
-/* 🔥 SINGLE APPOINTMENT DETAIL */
+/*  SINGLE APPOINTMENT DETAIL */
 export const getAppointmentById = (id: string) =>
   API.get(`/opd/appointments/${id}`);
 
-/* 🔥 CANCEL OPD */
+/*  CANCEL OPD */
 export const cancelOpd = (id: string, reason?: string) =>
   API.patch(`/opd/cancel/${id}`, { reason });

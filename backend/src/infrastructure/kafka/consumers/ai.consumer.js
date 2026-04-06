@@ -13,7 +13,7 @@ export const startAIConsumer = async () => {
     eachMessage: async ({ message }) => {
       const event = JSON.parse(message.value.toString());
 
-      console.log("📥 Event received:", event.type);
+      console.log(" Event received:", event.type);
 
       // Example: increment monthly counter in Redis
       if (event.type === "APPOINTMENT_BOOKED") {
