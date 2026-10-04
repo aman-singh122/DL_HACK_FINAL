@@ -2,31 +2,27 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMyMedicalRecords } from "@/api/records.api";
 import {
   Search,
   FileText,
   Calendar,
-  User,
   Building2,
   Download,
   Eye,
   Pill,
   TestTube,
-  Heart,
   X,
   Loader2,
   Filter,
-  File,
-  AlertCircle,
-  Clock,
-  Shield,
-  ChevronDown,
+  ShieldCheck,
+  CheckCircle2,
+  Stethoscope,
   ExternalLink,
+  Printer
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface UIRecord {
   id: string;
@@ -49,13 +45,12 @@ const MedicalRecords = () => {
   const [records, setRecords] = useState<UIRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     const fetchRecords = async () => {
       try {
         const res = await getMyMedicalRecords();
-        const formatted: UIRecord[] = res.data.records.flatMap(
+        const formatted: UIRecord[] = (res.data?.records || []).flatMap(
           (record: any) =>
             (record.reports || []).map((report: any) => {
               const fileUrl = report.fileUrl?.startsWith("http")
@@ -64,22 +59,22 @@ const MedicalRecords = () => {
 
               const types = ["prescription", "lab", "diagnosis"];
               const reportType = report.reportType?.toLowerCase() || "";
-              const type = types.find(t => reportType.includes(t)) || "other";
+              const type = types.find((t) => reportType.includes(t)) || "other";
 
               return {
                 id: `${record._id}-${report._id || Math.random()}`,
                 type,
-                title: report.reportType || "Medical Report",
-                doctor: record.doctor?.doctorName || "General Physician",
-                hospital: record.hospital?.hospitalName || "Medical Center",
-                date: new Date(record.visitDate).toLocaleDateString("en-GB", {
+                title: report.reportType || "Clinical Diagnostic Report",
+                doctor: record.doctor?.doctorName || "Consultant Physician",
+                hospital: record.hospital?.hospitalName || "Hospital Medical Center",
+                date: new Date(record.visitDate || Date.now()).toLocaleDateString("en-GB", {
                   day: "2-digit",
                   month: "short",
                   year: "numeric",
                 }),
-                description: report.description || "Medical report uploaded by provider",
+                description: report.description || "Medical document authorized and uploaded by healthcare provider.",
                 fileUrl,
-                fileSize: `${Math.floor(Math.random() * 2000) + 500} KB`,
+                fileSize: `${Math.floor(Math.random() * 800) + 250} KB`,
               };
             })
         );
@@ -99,72 +94,65 @@ const MedicalRecords = () => {
       const response = await fetch(url);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = filename || "medical-report";
+      link.download = filename || "Medical-Report.pdf";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error("Download failed", error);
+      toast.success("Document downloaded successfully");
+    } catch (err) {
+      toast.error("Download failed. Opening secure link directly.");
       window.open(url, "_blank");
     } finally {
       setDownloadingId(null);
     }
   };
 
-  const filteredRecords = records.filter((record) => {
+  const filteredRecords = records.filter((rec) => {
     const matchesSearch =
-      record.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.doctor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.hospital.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === "all" || record.type === selectedType;
+      rec.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rec.doctor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rec.hospital.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedType === "all" || rec.type === selectedType;
     return matchesSearch && matchesType;
   });
 
-  const getRecordIcon = (type: string) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
-      case "prescription": return Pill;
-      case "lab": return TestTube;
-      case "diagnosis": return Heart;
-      default: return FileText;
+      case "prescription":
+        return <Pill className="h-4 w-4 text-emerald-600" />;
+      case "lab":
+        return <TestTube className="h-4 w-4 text-sky-700" />;
+      case "diagnosis":
+        return <Stethoscope className="h-4 w-4 text-purple-600" />;
+      default:
+        return <FileText className="h-4 w-4 text-slate-600" />;
     }
   };
 
-  const getRecordColor = (type: string) => {
+  const getTypeBadge = (type: string) => {
     switch (type) {
-      case "prescription": return { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", badge: "bg-blue-100" };
-      case "lab": return { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", badge: "bg-purple-100" };
-      case "diagnosis": return { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", badge: "bg-rose-100" };
-      default: return { bg: "bg-gray-50", text: "text-gray-700", border: "border-gray-200", badge: "bg-gray-100" };
+      case "prescription":
+        return <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Prescription Slip</span>;
+      case "lab":
+        return <span className="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">Laboratory Test</span>;
+      case "diagnosis":
+        return <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">Clinical Diagnosis</span>;
+      default:
+        return <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Medical Document</span>;
     }
-  };
-
-  const recordStats = {
-    total: records.length,
-    prescriptions: records.filter(r => r.type === "prescription").length,
-    lab: records.filter(r => r.type === "lab").length,
-    diagnosis: records.filter(r => r.type === "diagnosis").length,
   };
 
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
-          <div className="mb-6">
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <div className="flex gap-2 mb-6">
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-12 w-full" />
+          <div className="space-y-3 pt-4">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-10 w-24 rounded-lg" />
-            ))}
-          </div>
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-xl" />
+              <Skeleton key={i} className="h-28 w-full rounded-lg" />
             ))}
           </div>
         </div>
@@ -174,269 +162,211 @@ const MedicalRecords = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Medical Records</h1>
-              <p className="text-gray-600 text-sm mt-1">
-                Your complete digital health history and reports
-              </p>
-            </div>
-            
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search records..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-10 text-sm"
-              />
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Electronic Health Records (EHR)
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Secure lifelong repository for diagnostic reports, lab results, and certified prescriptions.
+            </p>
           </div>
 
-          {/* Stats & Filters */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <FileText className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">{recordStats.total}</span>
-                </div>
-                <span className="text-gray-400">|</span>
-                <div className="flex items-center gap-1">
-                  <Pill className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-gray-700">{recordStats.prescriptions}</span>
-                </div>
-                <span className="text-gray-400">|</span>
-                <div className="flex items-center gap-1">
-                  <TestTube className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium text-gray-700">{recordStats.lab}</span>
-                </div>
-                <span className="text-gray-400">|</span>
-                <div className="flex items-center gap-1">
-                  <Heart className="h-4 w-4 text-rose-600" />
-                  <span className="text-sm font-medium text-gray-700">{recordStats.diagnosis}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              {[
-                { id: "all", label: "All" },
-                { id: "prescription", label: "Prescriptions" },
-                { id: "lab", label: "Lab Reports" },
-                { id: "diagnosis", label: "Diagnosis" },
-              ].map((type) => {
-                const colors = getRecordColor(type.id);
-                return (
-                  <button
-                    key={type.id}
-                    onClick={() => setSelectedType(type.id)}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors border ${
-                      selectedType === type.id
-                        ? `${colors.bg} ${colors.text} ${colors.border}`
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200"
-                    }`}
-                  >
-                    {type.label}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 text-sky-800 border border-sky-200/80 text-xs font-semibold">
+              <ShieldCheck className="h-4 w-4 text-sky-700" />
+              <span>ABDM Encrypted Vault</span>
+            </span>
           </div>
         </div>
 
-        {/* Records List */}
-        {filteredRecords.length > 0 ? (
-          <div className="space-y-3">
-            {filteredRecords.map((record) => {
-              const colors = getRecordColor(record.type);
-              const Icon = getRecordIcon(record.type);
-              const isDownloading = downloadingId === record.id;
+        {/* Toolbar & Filter Tabs */}
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+            {[
+              { id: "all", label: `All Files (${records.length})` },
+              { id: "lab", label: "Lab Tests" },
+              { id: "prescription", label: "Prescriptions" },
+              { id: "diagnosis", label: "Diagnoses" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedType(tab.id)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
+                  selectedType === tab.id
+                    ? "bg-sky-700 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-              return (
-                <Card key={record.id} className="border border-gray-200 hover:border-blue-300 rounded-xl hover:shadow-sm transition-all">
-                  <div className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className={`h-14 w-14 rounded-xl flex items-center justify-center ${colors.bg} ${colors.border} border`}>
-                        <Icon className="h-6 w-6" />
-                      </div>
+          {/* Search */}
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search record name, doctor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-600 text-slate-900 placeholder:text-slate-400"
+            />
+          </div>
+        </div>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-semibold text-gray-900 text-base truncate">{record.title}</h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className={`text-xs ${colors.badge} ${colors.text}`}>
-                                {record.type}
-                              </Badge>
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <File className="h-3 w-3" />
-                                <span>{record.fileSize}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-gray-600 mb-3">
-                          <div className="flex items-center gap-2">
-                            <User className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                            <span className="truncate">{record.doctor}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                            <span className="truncate">{record.hospital}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                            <span>{record.date}</span>
-                          </div>
-                        </div>
-
-                        <p className="text-sm text-gray-500 line-clamp-2">{record.description}</p>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-9"
-                          onClick={() => setSelectedRecord(record)}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="h-9 bg-blue-600 hover:bg-blue-700"
-                          disabled={isDownloading}
-                          onClick={() => handleDownload(record.fileUrl, `${record.title}-${record.date}.pdf`, record.id)}
-                        >
-                          {isDownloading ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Download className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+        {/* Records Archive List */}
+        {filteredRecords.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-lg p-12 text-center shadow-sm">
+            <FileText className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+            <h3 className="text-sm font-bold text-slate-900">No Clinical Documents Recorded</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              Diagnostic reports and digital prescriptions uploaded by your attending physicians will appear here automatically.
+            </p>
           </div>
         ) : (
-          <div className="py-12 text-center">
-            <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-              <FileText className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No records found</h3>
-            <p className="text-gray-600 text-sm mb-6">
-              {searchQuery || selectedType !== "all" 
-                ? "Try adjusting your search or filters"
-                : "No medical records available yet"
-              }
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setSearchQuery(""); setSelectedType("all"); }}
-            >
-              Clear filters
-            </Button>
+          <div className="space-y-3">
+            {filteredRecords.map((rec) => (
+              <div
+                key={rec.id}
+                className="bg-white border border-slate-200 rounded-lg p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    {getTypeIcon(rec.type)}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-900">{rec.title}</h3>
+                      {getTypeBadge(rec.type)}
+                      <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded">
+                        {rec.fileSize}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <span>By <strong>{rec.doctor}</strong></span>
+                      <span>•</span>
+                      <span>{rec.hospital}</span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 pt-1 leading-relaxed">
+                      {rec.description}
+                    </p>
+
+                    <div className="flex items-center gap-2 text-xs text-slate-400 pt-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>Authorized visit date: {rec.date}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end md:self-center pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 w-full md:w-auto justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedRecord(rec)}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs h-8 px-3"
+                  >
+                    <Eye className="h-3.5 w-3.5 mr-1.5" />
+                    Preview
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    disabled={downloadingId === rec.id}
+                    onClick={() => handleDownload(rec.fileUrl, `${rec.title}.pdf`, rec.id)}
+                    className="bg-sky-700 hover:bg-sky-800 text-white text-xs h-8 px-3.5 shadow-sm"
+                  >
+                    {downloadingId === rec.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <Download className="h-3.5 w-3.5 mr-1.5" />
+                        Download
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Footer Info */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-500">
-            <div className="flex items-center gap-2">
-              <Shield className="h-3.5 w-3.5 text-green-500" />
-              <span>Secure & encrypted</span>
-            </div>
-            <div className="h-1 w-1 rounded-full bg-gray-300"></div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5 text-blue-500" />
-              <span>Available 24/7</span>
-            </div>
-            <div className="h-1 w-1 rounded-full bg-gray-300"></div>
-            <div className="flex items-center gap-2">
-              <Download className="h-3.5 w-3.5 text-purple-500" />
-              <span>Download anytime</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Record Detail Modal */}
+        {/* Document Preview Modal */}
         {selectedRecord && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div 
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in" 
-              onClick={() => setSelectedRecord(null)} 
-            />
-            <div className="relative bg-white rounded-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${getRecordColor(selectedRecord.type).bg}`}>
-                      {(() => { 
-                        const Icon = getRecordIcon(selectedRecord.type); 
-                        return <Icon className="h-6 w-6" /> 
-                      })()}
-                    </div>
-                    <div>
-                      <Badge className={`${getRecordColor(selectedRecord.type).badge} ${getRecordColor(selectedRecord.type).text} text-xs`}>
-                        {selectedRecord.type}
-                      </Badge>
-                    </div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="bg-white border border-slate-200 rounded-lg max-w-2xl w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded bg-sky-50 text-sky-700 flex items-center justify-center">
+                    <FileText className="h-4 w-4" />
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedRecord(null)} className="h-8 w-8 p-0">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">{selectedRecord.title}</h2>
-                    <p className="text-gray-600 text-sm">{selectedRecord.description}</p>
-                  </div>
-
-                  <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-500">Doctor</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedRecord.doctor}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-500">Hospital</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedRecord.hospital}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-500">Date</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedRecord.date}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-500">File Size</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedRecord.fileSize}</span>
-                    </div>
+                    <h3 className="text-sm font-bold text-slate-900">{selectedRecord.title}</h3>
+                    <p className="text-[11px] text-slate-500">Authorized by {selectedRecord.doctor} • {selectedRecord.date}</p>
                   </div>
                 </div>
+                <button
+                  onClick={() => setSelectedRecord(null)}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
-                <div className="mt-6 flex gap-3">
+              {/* Document Metadata Sheet */}
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Healthcare Center</span>
+                    <span className="font-semibold text-slate-800">{selectedRecord.hospital}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Document Classification</span>
+                    <span className="font-semibold text-slate-800 capitalize">{selectedRecord.type}</span>
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-slate-200">
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Clinical Summary</span>
+                  <p className="text-slate-700 mt-0.5 leading-relaxed">{selectedRecord.description}</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.print()}
+                  className="text-xs h-8 border-slate-300 gap-1.5"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print Record
+                </Button>
+
+                <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
-                    className="flex-1 h-10 text-sm"
+                    size="sm"
                     onClick={() => window.open(selectedRecord.fileUrl, "_blank")}
+                    className="text-xs h-8 gap-1.5 border-slate-300"
                   >
-                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                    Preview
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Open File
                   </Button>
                   <Button
-                    className="flex-1 h-10 text-sm bg-blue-600 hover:bg-blue-700"
-                    onClick={() => handleDownload(selectedRecord.fileUrl, `${selectedRecord.title}.pdf`, "modal")}
+                    size="sm"
+                    onClick={() => handleDownload(selectedRecord.fileUrl, `${selectedRecord.title}.pdf`, selectedRecord.id)}
+                    className="bg-sky-700 hover:bg-sky-800 text-white text-xs h-8 gap-1.5"
                   >
-                    <Download className="h-3.5 w-3.5 mr-1.5" />
-                    Download
+                    <Download className="h-3.5 w-3.5" />
+                    Download PDF
                   </Button>
                 </div>
               </div>

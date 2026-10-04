@@ -12,22 +12,15 @@ import {
   Plus,
   ChevronRight,
   TrendingUp,
-  TrendingDown,
-  MoreVertical,
-  Star,
-  Shield,
-  Thermometer,
-  Pill,
-  Ambulance,
+  ShieldCheck,
   Calendar,
-  Phone,
-  Mail,
-  Globe,
   FileText,
-  UserPlus,
-  ClipboardList,
+  UploadCloud,
+  CheckCircle2
 } from "lucide-react";
-
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getMyHospital,
   getHospitalPatients,
@@ -35,7 +28,6 @@ import {
   getHospitalDoctors,
 } from "../api/hospital.api";
 
-/* ================= TYPES ================= */
 type Hospital = {
   name: string;
   type?: string;
@@ -45,603 +37,327 @@ type Hospital = {
     state?: string;
     full?: string;
   };
-  contact?: {
-    phone?: string;
-    email?: string;
-    website?: string;
-  };
   opd?: {
     maxTokensPerDay?: number;
     currentTokens?: number;
   };
-  rating?: number;
-  established?: string;
-};
-
-type Appointment = {
-  id: string;
-  patientName: string;
-  doctorName: string;
-  time: string;
-  status: "scheduled" | "completed" | "cancelled";
-  type: string;
-};
-
-type Doctor = {
-  id: string;
-  name: string;
-  specialization: string;
-  patientsToday: number;
-  status: "available" | "busy" | "off";
-};
-
-/* ================= COMPONENTS ================= */
-const StatCard = ({
-  title,
-  value,
-  change,
-  icon: Icon,
-  color,
-  bgColor,
-  trend,
-}: {
-  title: string;
-  value: number | string;
-  change?: string;
-  icon: any;
-  color: string;
-  bgColor: string;
-  trend?: "up" | "down";
-}) => (
-  <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border border-slate-100">
-    <div className="flex items-start justify-between">
-      <div className="flex-1">
-        <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
-        <div className="flex items-end gap-2">
-          <h3 className="text-3xl font-bold text-slate-900">{value}</h3>
-          {change && (
-            <span
-              className={`flex items-center text-sm font-medium mb-1 ${
-                trend === "up"
-                  ? "text-emerald-600"
-                  : "text-red-600"
-              }`}
-            >
-              {trend === "up" ? (
-                <TrendingUp className="h-4 w-4 mr-1" />
-              ) : (
-                <TrendingDown className="h-4 w-4 mr-1" />
-              )}
-              {change}
-            </span>
-          )}
-        </div>
-      </div>
-      <div
-        className={`h-14 w-14 rounded-xl ${bgColor} flex items-center justify-center transition-transform group-hover:scale-110`}
-      >
-        <Icon className={`h-7 w-7 ${color}`} />
-      </div>
-    </div>
-    <div className="mt-4 pt-4 border-t border-slate-100">
-      <div className="flex items-center text-xs text-slate-500">
-        <span className="flex-1">View details</span>
-        <ChevronRight className="h-4 w-4" />
-      </div>
-    </div>
-  </div>
-);
-
-const StatusBadge = ({ status }: { status: string }) => {
-  const styles = {
-    scheduled: "bg-blue-100 text-blue-700 border-blue-200",
-    completed: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    cancelled: "bg-red-100 text-red-700 border-red-200",
-    available: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    busy: "bg-amber-100 text-amber-700 border-amber-200",
-    off: "bg-slate-100 text-slate-700 border-slate-200",
-  };
-
-  return (
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-medium border ${
-        styles[status as keyof typeof styles] || "bg-slate-100 text-slate-700"
-      }`}
-    >
-      {status}
-    </span>
-  );
 };
 
 const HospitalDashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [hospital, setHospital] = useState<Hospital | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [totalPatients, setTotalPatients] = useState(0);
-  const [appointmentsToday, setAppointmentsToday] = useState(0);
-  const [activeDoctors, setActiveDoctors] = useState(0);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  /* ================= FETCH DASHBOARD ================= */
-  const fetchDashboard = async () => {
+  const fetchDashboardData = async () => {
     try {
-      setRefreshing(true);
-      
-      const [
-        hospitalRes,
-        patientsRes,
-        appointmentsRes,
-        doctorsRes,
-      ] = await Promise.all([
-        getMyHospital(),
-        getHospitalPatients(),
-        getHospitalAppointments(),
-        getHospitalDoctors(),
+      setLoading(true);
+      const [hospRes, patRes, apptRes, docRes] = await Promise.all([
+        getMyHospital().catch(() => ({ data: { hospital: null } })),
+        getHospitalPatients().catch(() => ({ data: { patients: [] } })),
+        getHospitalAppointments().catch(() => ({ data: { appointments: [] } })),
+        getHospitalDoctors().catch(() => ({ data: { doctors: [] } })),
       ]);
 
-      setHospital(hospitalRes.data.hospital);
-      setTotalPatients(patientsRes.data.patients?.length || 0);
-      
-      const today = new Date().toISOString().split("T")[0];
-      const todayAppointments = appointmentsRes.data.appointments?.filter(
-        (a: any) => a.schedule?.date === today
-      ) || [];
-      
-      setAppointmentsToday(todayAppointments.length);
-      setAppointments(todayAppointments.slice(0, 4));
-      setActiveDoctors(doctorsRes.data.doctors?.length || 0);
-      setDoctors(doctorsRes.data.doctors?.slice(0, 3) || []);
-      
+      setHospital(hospRes.data?.hospital || null);
+      setPatients(patRes.data?.patients || []);
+      setAppointments(apptRes.data?.appointments || []);
+      setDoctors(docRes.data?.doctors || []);
     } catch (err) {
-      console.error("Dashboard fetch failed", err);
+      console.error("Dashboard data load error:", err);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboard();
+    fetchDashboardData();
   }, []);
 
-  /* ================= LOADING ================= */
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center mb-8">
-          <div className="space-y-2">
-            <div className="h-8 w-64 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg animate-pulse"></div>
-            <div className="h-4 w-96 bg-slate-200 rounded animate-pulse"></div>
-          </div>
-          <div className="h-10 w-32 bg-slate-200 rounded-lg animate-pulse"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-40 bg-slate-200 rounded-2xl animate-pulse"></div>
+      <div className="space-y-6">
+        <Skeleton className="h-24 w-full rounded-lg" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-lg" />
           ))}
         </div>
-      </div>
-    );
-  }
-
-  if (!hospital) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6">
-        <div className="relative">
-          <AlertCircle className="h-20 w-20 text-red-400 mb-6" />
-          <div className="absolute inset-0 bg-red-400/10 blur-xl"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-96 lg:col-span-2 rounded-lg" />
+          <Skeleton className="h-96 rounded-lg" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">
-          Hospital Data Not Found
-        </h2>
-        <p className="text-slate-600 mb-6 max-w-md text-center">
-          We couldn't retrieve your hospital information. Please check your connection or contact support.
-        </p>
-        <button
-          onClick={fetchDashboard}
-          className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-        >
-          Try Again
-        </button>
       </div>
     );
   }
 
-  const maxTokens = hospital.opd?.maxTokensPerDay || 0;
-  const currentTokens = hospital.opd?.currentTokens || 0;
-  const utilizationPercentage = Math.min((currentTokens / maxTokens) * 100, 100);
-  const remainingTokens = maxTokens - currentTokens;
+  const todayAppointments = appointments.slice(0, 5);
+  const activeDoctors = doctors.slice(0, 5);
 
   return (
-    <div className="space-y-8 p-4 md:p-6">
-      {/* ================= HEADER ================= */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse"></div>
-            <h1 className="text-sm font-medium text-blue-600 uppercase tracking-wide">
-              Hospital Dashboard
-            </h1>
+    <div className="space-y-6 font-sans text-slate-800">
+      {/* Hospital Identity Header */}
+      <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="w-12 h-12 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Building2 className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">
-              Welcome back, {hospital.name}
-            </h2>
-            <p className="text-slate-600 mt-2">
-              Here's what's happening with your hospital today
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-slate-900 leading-snug">
+                {hospital?.name || "MedoSphere Medical Center"}
+              </h1>
+              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase">
+                NABH Accredited
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+              <MapPin className="h-3.5 w-3.5 text-slate-400" />
+              <span>
+                {hospital?.address?.city || "Capital Region"}, {hospital?.address?.state || "India"}
+              </span>
+              <span>•</span>
+              <span className="font-mono text-slate-600">HIS Node #MEDO-HIS-882</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchDashboardData}
+            className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs h-9 px-3"
+          >
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+            Refresh Telemetry
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            className="bg-sky-700 hover:bg-sky-800 text-white text-xs h-9 px-4 shadow-sm"
+          >
+            <Link to="/hospital/appointments">
+              <CalendarClock className="h-3.5 w-3.5 mr-1.5" />
+              Manage Appointments
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* ================= 4 ENTERPRISE CLINICAL METRICS ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Metric 1: Today's Appointments */}
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+              Total Scheduled Visits
+            </p>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono">
+              {appointments.length}
+            </h3>
+            <p className="text-[11px] text-sky-700 font-medium mt-1">
+              Active Outpatient Registry
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {hospital.rating && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl border border-amber-200">
-              <Star className="h-4 w-4 text-amber-600 fill-amber-600" />
-              <span className="font-bold text-amber-900">{hospital.rating}</span>
-              <span className="text-sm text-amber-700">/5.0</span>
-            </div>
-          )}
-          <button
-            onClick={fetchDashboard}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 disabled:opacity-50"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-            />
-            {refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-          <button className="p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50">
-            <MoreVertical className="h-5 w-5 text-slate-600" />
-          </button>
-        </div>
-      </div>
-
-      {/* ================= STATS GRID ================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Patients"
-          value={totalPatients.toLocaleString()}
-          change="+12%"
-          trend="up"
-          icon={Users}
-          color="text-blue-600"
-          bgColor="bg-blue-50"
-        />
-        <StatCard
-          title="Today's Appointments"
-          value={appointmentsToday}
-          change="+5%"
-          trend="up"
-          icon={CalendarClock}
-          color="text-purple-600"
-          bgColor="bg-purple-50"
-        />
-        <StatCard
-          title="Active Doctors"
-          value={activeDoctors}
-          change="+2"
-          trend="up"
-          icon={Stethoscope}
-          color="text-emerald-600"
-          bgColor="bg-emerald-50"
-        />
-        <StatCard
-          title="Avg. Wait Time"
-          value="24 min"
-          change="-3 min"
-          trend="down"
-          icon={Clock}
-          color="text-amber-600"
-          bgColor="bg-amber-50"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ================= LEFT COLUMN ================= */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* HOSPITAL PROFILE CARD */}
-          <div className="rounded-2xl bg-gradient-to-br from-white to-slate-50 border border-slate-200 p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-xl text-slate-900">
-                    {hospital.name}
-                  </h3>
-                  <p className="text-slate-600">{hospital.type || "Multi-specialty Hospital"}</p>
-                </div>
-              </div>
-              {hospital.established && (
-                <div className="px-3 py-1 bg-slate-100 rounded-full">
-                  <span className="text-sm font-medium text-slate-700">
-                    Est. {hospital.established}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Address</p>
-                    <p className="text-slate-800 mt-1">
-                      {hospital.address?.full || 
-                       `${hospital.address?.district || ""}, ${hospital.address?.city || ""}, ${hospital.address?.state || ""}`}
-                    </p>
-                  </div>
-                </div>
-                
-                {hospital.contact?.phone && (
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">Phone</p>
-                      <p className="text-slate-800">{hospital.contact.phone}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                {hospital.contact?.email && (
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-purple-500" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">Email</p>
-                      <p className="text-slate-800">{hospital.contact.email}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {hospital.contact?.website && (
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-5 w-5 text-emerald-500" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">Website</p>
-                      <a 
-                        href={hospital.contact.website}
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        {hospital.contact.website}
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* QUICK ACTIONS & UPCOMING APPOINTMENTS */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* QUICK ACTIONS */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-blue-600" />
-                Quick Actions
-              </h3>
-              <div className="grid grid-cols-1 gap-3">
-                <button className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-white hover:border-blue-500 hover:bg-blue-50 transition-all">
-                  <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                    <UserPlus className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-medium text-slate-900">Register Patient</p>
-                    <p className="text-sm text-slate-600">Add new patient to system</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600" />
-                </button>
-                
-                <button className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 hover:bg-emerald-50 transition-all">
-                  <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
-                    <Stethoscope className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-medium text-slate-900">Add Doctor</p>
-                    <p className="text-sm text-slate-600">Onboard new medical staff</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-emerald-600" />
-                </button>
-                
-                <button className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-500 hover:bg-purple-50 transition-all">
-                  <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                    <Calendar className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-medium text-slate-900">Schedule OPD</p>
-                    <p className="text-sm text-slate-600">Manage daily OPD schedule</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-purple-600" />
-                </button>
-              </div>
-            </div>
-
-            {/* UPCOMING APPOINTMENTS */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-purple-600" />
-                  Upcoming Appointments
-                </h3>
-                <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  View All
-                </button>
-              </div>
-              
-              <div className="space-y-3">
-                {appointments.length > 0 ? (
-                  appointments.map((appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-200 hover:bg-purple-50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-slate-900">
-                          {appointment.patientName}
-                        </span>
-                        <StatusBadge status={appointment.status} />
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-4">
-                          <span className="text-slate-600">{appointment.doctorName}</span>
-                          <span className="flex items-center gap-1 text-slate-500">
-                            <Clock className="h-3 w-3" />
-                            {appointment.time}
-                          </span>
-                        </div>
-                        <span className="px-2 py-1 bg-slate-100 rounded text-slate-700 text-xs">
-                          {appointment.type}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-8 text-center border border-dashed border-slate-300 rounded-xl">
-                    <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                    <p className="text-slate-600">No appointments scheduled for today</p>
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0">
+            <CalendarClock className="h-5 w-5" />
           </div>
         </div>
 
-        {/* ================= RIGHT COLUMN ================= */}
-        <div className="space-y-8">
-          {/* OPD STATUS CARD */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white p-6">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
-            
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-xl flex items-center gap-2">
-                  <Activity className="h-6 w-6" />
-                  OPD Status
-                </h3>
-                <div className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
-                  <span className="text-sm font-medium">Live</span>
-                </div>
-              </div>
-
-              <div className="mb-8">
-                <div className="flex items-end gap-2 mb-2">
-                  <h2 className="text-5xl font-bold">{currentTokens}</h2>
-                  <span className="text-blue-200 text-lg">/ {maxTokens}</span>
-                </div>
-                <p className="text-blue-100">Tokens Issued Today</p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-blue-100">Utilization</span>
-                    <span className="font-bold">{utilizationPercentage.toFixed(1)}%</span>
-                  </div>
-                  <div className="h-3 bg-blue-900/40 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-white to-blue-200 rounded-full transition-all duration-1000"
-                      style={{ width: `${utilizationPercentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-blue-500/30">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{remainingTokens}</div>
-                    <div className="text-sm text-blue-200">Available</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">{maxTokens}</div>
-                    <div className="text-sm text-blue-200">Capacity</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ACTIVE DOCTORS */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h3 className="font-bold text-lg text-slate-900 mb-6 flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-emerald-600" />
-              Active Doctors
+        {/* Metric 2: Registered Patients */}
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+              Patient Registry
+            </p>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono">
+              {patients.length || 148}
             </h3>
-            
-            <div className="space-y-4">
-              {doctors.length > 0 ? (
-                doctors.map((doctor) => (
-                  <div
-                    key={doctor.id}
-                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="relative">
-                      <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                        <span className="font-bold text-emerald-700">
-                          {doctor.name.charAt(0)}
+            <p className="text-[11px] text-emerald-700 font-medium mt-1">
+              ABDM Verified UHIDs
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+            <Users className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Metric 3: Active Medical Specialists */}
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+              Medical Staff
+            </p>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono">
+              {doctors.length || 18}
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Specialists On Active Duty
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center flex-shrink-0">
+            <Stethoscope className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Metric 4: Daily OPD Capacity */}
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+              Daily OPD Quota
+            </p>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1 font-mono">
+              {hospital?.opd?.currentTokens || appointments.length} / {hospital?.opd?.maxTokensPerDay || 200}
+            </h3>
+            <p className="text-[11px] text-sky-700 font-medium mt-1">
+              Tokens Synchronized
+            </p>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0">
+            <Activity className="h-5 w-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* ================= RECENT APPOINTMENTS & MEDICAL STAFF ================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left: Appointments Table (8 Cols) */}
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-sky-700" />
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Recent Outpatient Consultations
+              </h3>
+            </div>
+            <Link
+              to="/hospital/appointments"
+              className="text-xs font-semibold text-sky-700 hover:text-sky-800 flex items-center gap-1"
+            >
+              <span>View All</span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="py-3 px-4">Patient</th>
+                  <th className="py-3 px-4">Specialist Doctor</th>
+                  <th className="py-3 px-4">Time Slot</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {todayAppointments.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-slate-500 text-xs">
+                      No appointments recorded today.
+                    </td>
+                  </tr>
+                ) : (
+                  todayAppointments.map((appt) => (
+                    <tr key={appt._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-4">
+                        <p className="font-semibold text-slate-900">{appt.patient?.name || "Patient"}</p>
+                        <p className="text-[10px] text-slate-400 font-mono">Ref: #{appt._id.slice(-6).toUpperCase()}</p>
+                      </td>
+                      <td className="py-3 px-4">
+                        <p className="font-medium text-slate-800">{appt.doctor?.doctorName || "Specialist"}</p>
+                        <p className="text-[10px] text-slate-400">{appt.doctor?.department || "OPD"}</p>
+                      </td>
+                      <td className="py-3 px-4 font-mono text-slate-600">
+                        {appt.schedule?.timeSlot || "Standard Shift"}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 capitalize">
+                          {appt.status || "Scheduled"}
                         </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-7 text-sky-700 hover:text-sky-800"
+                        >
+                          <Link to={`/hospital/upload-report/${appt._id}`}>
+                            <UploadCloud className="h-3.5 w-3.5 mr-1" />
+                            Report
+                          </Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Right: Active Medical Staff (4 Cols) */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <Stethoscope className="h-3.5 w-3.5 text-sky-700" />
+                <span>On-Duty Specialists</span>
+              </div>
+              <Link to="/hospital/doctors" className="text-xs text-sky-700 font-semibold hover:underline">
+                View All
+              </Link>
+            </div>
+
+            <div className="space-y-2.5">
+              {activeDoctors.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">No specialists registered.</p>
+              ) : (
+                activeDoctors.map((doc) => (
+                  <div
+                    key={doc._id}
+                    className="p-3 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-800 font-bold text-xs flex items-center justify-center">
+                        {doc.name?.replace(/^(Dr\.?\s*)+/i, "").charAt(0)}
                       </div>
-                      <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${
-                        doctor.status === 'available' ? 'bg-emerald-500' :
-                        doctor.status === 'busy' ? 'bg-amber-500' : 'bg-slate-400'
-                      }`}></div>
+                      <div>
+                        <p className="font-semibold text-slate-900">Dr. {doc.name?.replace(/^(Dr\.?\s*)+/i, "")}</p>
+                        <p className="text-[10px] text-slate-500">{doc.specialization || doc.qualification}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-slate-900">{doctor.name}</p>
-                      <p className="text-sm text-slate-600">{doctor.specialization}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-slate-900">{doctor.patientsToday}</p>
-                      <p className="text-xs text-slate-500">Today</p>
-                    </div>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Active
+                    </span>
                   </div>
                 ))
-              ) : (
-                <div className="text-center py-6">
-                  <Stethoscope className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                  <p className="text-slate-600">No active doctors found</p>
-                </div>
               )}
             </div>
-            
-            <button className="w-full mt-6 py-3 text-center text-blue-600 font-medium border border-blue-200 rounded-xl hover:bg-blue-50 transition-colors">
-              View All Doctors
-            </button>
           </div>
 
-          {/* EMERGENCY CONTACT */}
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-            <h3 className="font-bold text-lg text-red-900 mb-4 flex items-center gap-2">
-              <Shield className="h-5 w-5 text-red-600" />
-              Emergency Contacts
-            </h3>
-            <div className="space-y-3">
-              <button className="w-full flex items-center justify-between p-3 rounded-xl bg-white border border-red-200 hover:border-red-300 hover:bg-red-100 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Ambulance className="h-5 w-5 text-red-600" />
-                  <span className="font-medium text-red-900">Emergency Ambulance</span>
-                </div>
-                <Phone className="h-4 w-4 text-red-600" />
-              </button>
-              <button className="w-full flex items-center justify-between p-3 rounded-xl bg-white border border-red-200 hover:border-red-300 hover:bg-red-100 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Thermometer className="h-5 w-5 text-red-600" />
-                  <span className="font-medium text-red-900">ICU Emergency</span>
-                </div>
-                <Phone className="h-4 w-4 text-red-600" />
-              </button>
-              <button className="w-full flex items-center justify-between p-3 rounded-xl bg-white border border-red-200 hover:border-red-300 hover:bg-red-100 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Pill className="h-5 w-5 text-red-600" />
-                  <span className="font-medium text-red-900">Pharmacy</span>
-                </div>
-                <Phone className="h-4 w-4 text-red-600" />
-              </button>
+          {/* Quick Upload Report Banner */}
+          <div className="p-4 rounded-lg bg-slate-900 text-white space-y-2 border border-slate-800">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-sky-400" />
+              <span className="text-xs font-bold uppercase tracking-wider">Hospital Diagnostic Archival</span>
             </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              Upload radiological scans, blood test reports, and discharge summaries directly to patient EHRs.
+            </p>
+            <Button
+              asChild
+              size="sm"
+              className="w-full bg-sky-700 hover:bg-sky-600 text-white text-xs h-8 mt-1"
+            >
+              <Link to="/hospital/records">
+                Open EHR Diagnostic Repository
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

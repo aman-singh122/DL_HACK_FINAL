@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { 
-  Activity, 
-  Clock, 
-  Users, 
-  AlertCircle, 
-  CheckCircle, 
-  TrendingUp, 
+import { useParams, Link } from "react-router-dom";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import {
+  Activity,
+  Clock,
+  Users,
+  AlertCircle,
+  CheckCircle,
+  TrendingUp,
   Bell,
   User,
-  Shield
+  ShieldCheck,
+  Building2,
+  Calendar,
+  ArrowRight,
+  Phone,
+  RefreshCw
 } from "lucide-react";
-
-/* ================= TYPES ================= */
+import { Button } from "@/components/ui/button";
 
 interface QueueItem {
   tokenNumber: number;
@@ -31,374 +36,303 @@ interface DepartmentStats {
   avgWait: number;
 }
 
-/* ================= COMPONENT ================= */
-
 export default function PatientQueue() {
   const { queueId } = useParams();
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [myToken, setMyToken] = useState<number | null>(102);
-  const [alertMsg, setAlertMsg] = useState("Dr. Smith is running 10 minutes ahead of schedule");
   const [departments, setDepartments] = useState<DepartmentStats[]>([
-    { name: "General", waiting: 8, serving: 2, avgWait: 15 },
+    { name: "General Medicine", waiting: 8, serving: 2, avgWait: 15 },
     { name: "Cardiology", waiting: 5, serving: 1, avgWait: 25 },
     { name: "Orthopedics", waiting: 3, serving: 1, avgWait: 20 },
   ]);
-  const [timeFilter, setTimeFilter] = useState<"all" | "today" | "upcoming">("all");
   const [notifications, setNotifications] = useState([
-    { id: 1, message: "Your turn is approaching", time: "2 min ago", read: false },
-    { id: 2, message: "Queue moved faster than expected", time: "15 min ago", read: true },
+    { id: 1, message: "Your turn is approaching (2 patients ahead).", time: "2 min ago", read: false },
+    { id: 2, message: "OPD Room 4 consultation speed is running on schedule.", time: "15 min ago", read: true },
   ]);
-
-  /* ================= INIT ================= */
 
   useEffect(() => {
     setQueue([
-      { tokenNumber: 100, status: "completed", urgency: "normal", patientName: "John Doe", department: "General", checkInTime: "09:00 AM", estimatedDuration: 15 },
-      { tokenNumber: 101, status: "completed", urgency: "moderate", patientName: "Jane Smith", department: "Cardiology", checkInTime: "09:15 AM", estimatedDuration: 20 },
-      { tokenNumber: 102, status: "serving", urgency: "critical", patientName: "You", department: "General", checkInTime: "09:30 AM", estimatedDuration: 25 },
-      { tokenNumber: 103, status: "waiting", urgency: "critical", patientName: "Robert Brown", department: "General", checkInTime: "09:45 AM", estimatedDuration: 30 },
-      { tokenNumber: 104, status: "waiting", urgency: "moderate", patientName: "Alice Johnson", department: "Orthopedics", checkInTime: "10:00 AM", estimatedDuration: 20 },
-      { tokenNumber: 105, status: "waiting", urgency: "normal", patientName: "Michael Chen", department: "Cardiology", checkInTime: "10:15 AM", estimatedDuration: 15 },
-      { tokenNumber: 106, status: "waiting", urgency: "normal", patientName: "Sarah Wilson", department: "General", checkInTime: "10:30 AM", estimatedDuration: 10 },
+      { tokenNumber: 100, status: "completed", urgency: "normal", patientName: "J. D.", department: "General Medicine", checkInTime: "09:00 AM", estimatedDuration: 15 },
+      { tokenNumber: 101, status: "completed", urgency: "moderate", patientName: "S. K.", department: "General Medicine", checkInTime: "09:15 AM", estimatedDuration: 20 },
+      { tokenNumber: 102, status: "serving", urgency: "critical", patientName: "You (Token #102)", department: "General Medicine", checkInTime: "09:30 AM", estimatedDuration: 25 },
+      { tokenNumber: 103, status: "waiting", urgency: "moderate", patientName: "R. B.", department: "General Medicine", checkInTime: "09:45 AM", estimatedDuration: 30 },
+      { tokenNumber: 104, status: "waiting", urgency: "normal", patientName: "A. J.", department: "General Medicine", checkInTime: "10:00 AM", estimatedDuration: 20 },
+      { tokenNumber: 105, status: "waiting", urgency: "normal", patientName: "M. C.", department: "General Medicine", checkInTime: "10:15 AM", estimatedDuration: 15 },
+      { tokenNumber: 106, status: "waiting", urgency: "normal", patientName: "S. W.", department: "General Medicine", checkInTime: "10:30 AM", estimatedDuration: 10 },
     ]);
   }, []);
 
-  /* ================= HELPERS ================= */
-
-  const urgencyConfig = {
-    critical: { color: "bg-red-500", text: "text-red-600", icon: "🔴", label: "Critical" },
-    moderate: { color: "bg-yellow-500", text: "text-yellow-600", icon: "🟡", label: "Moderate" },
-    normal: { color: "bg-green-500", text: "text-green-600", icon: "🟢", label: "Normal" }
-  };
-
-  const statusConfig = {
-    serving: { color: "bg-blue-100 border-blue-200 text-blue-800", icon: <Activity size={14} /> },
-    completed: { color: "bg-gray-100 border-gray-200 text-gray-600", icon: <CheckCircle size={14} /> },
-    waiting: { color: "bg-orange-50 border-orange-100 text-orange-700", icon: <Clock size={14} /> }
-  };
-
   const myIndex = queue.findIndex((q) => q.tokenNumber === myToken);
   const servingIndex = queue.findIndex((q) => q.status === "serving");
+  const servingItem = queue[servingIndex];
   const patientsBeforeMe = myIndex > servingIndex ? myIndex - servingIndex : 0;
-  const estimatedWaitTime = patientsBeforeMe * 7;
-  const progressPercent = queue.length > 0 && myIndex !== -1 ? ((servingIndex + 1) / (myIndex + 1)) * 100 : 0;
+  const estimatedWaitTime = patientsBeforeMe * 8;
 
-  const waitingCount = queue.filter(q => q.status === "waiting").length;
-  const servingCount = queue.filter(q => q.status === "serving").length;
-  const completedCount = queue.filter(q => q.status === "completed").length;
+  const waitingCount = queue.filter((q) => q.status === "waiting").length;
+  const servingCount = queue.filter((q) => q.status === "serving").length;
+  const completedCount = queue.filter((q) => q.status === "completed").length;
 
-  const upcomingPatients = queue.slice(servingIndex + 1, Math.min(servingIndex + 4, queue.length));
+  const getUrgencyBadge = (urgency: string) => {
+    switch (urgency) {
+      case "critical":
+        return <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">Priority Level 1</span>;
+      case "moderate":
+        return <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Level 2</span>;
+      default:
+        return <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Routine</span>;
+    }
+  };
 
-  /* ================= UI COMPONENTS ================= */
-
-  const StatCard = ({ icon: Icon, label, value, color }: any) => (
-    <div className="bg-white rounded-xl border p-4 flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${color} text-white`}>
-        <Icon size={20} />
-      </div>
-      <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-2xl font-bold">{value}</p>
-      </div>
-    </div>
-  );
-
-  const DepartmentCard = ({ dept }: { dept: DepartmentStats }) => (
-    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border p-4">
-      <div className="flex justify-between items-start mb-3">
-        <h4 className="font-semibold text-gray-800">{dept.name}</h4>
-        <Shield size={18} className="text-blue-500" />
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-blue-600">{dept.waiting}</p>
-          <p className="text-xs text-gray-500">Waiting</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-green-600">{dept.serving}</p>
-          <p className="text-xs text-gray-500">Active</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-orange-600">{dept.avgWait}</p>
-          <p className="text-xs text-gray-500">Avg Min</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  const NotificationBell = () => (
-    <div className="relative">
-      <Bell className="cursor-pointer text-gray-600" size={22} />
-      {notifications.filter(n => !n.read).length > 0 && (
-        <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-          {notifications.filter(n => !n.read).length}
-        </span>
-      )}
-    </div>
-  );
-
-  /* ================= MAIN UI ================= */
+  const getStatusPill = (status: string) => {
+    switch (status) {
+      case "serving":
+        return (
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Inside Consultation
+          </span>
+        );
+      case "waiting":
+        return (
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+            <Clock className="w-3 h-3 text-amber-500" />
+            In Corridor Queue
+          </span>
+        );
+      case "completed":
+        return (
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+            <CheckCircle className="w-3 h-3 text-slate-400" />
+            Completed
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-600 rounded-lg text-white">
-                <TrendingUp size={24} />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900">Smart Queue Tracker</h1>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Telemetry Header */}
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-sky-700">
+                Hospital OPD Telemetry
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-xs text-slate-500">Room 4 • OPD Wing B</span>
             </div>
-            <p className="text-gray-600">Real-time patient tracking across all departments</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Real-Time Outpatient Corridor Queue
+            </h1>
+            <p className="text-xs text-slate-500">
+              Live token stream updated via hospital HIS WebSocket server.
+            </p>
           </div>
-          <div className="flex items-center gap-4 mt-4 md:mt-0">
-            <NotificationBell />
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border">
-              <User size={18} className="text-gray-500" />
-              <span className="font-medium">Patient Portal</span>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live Telemetry Connected
+            </span>
+          </div>
+        </div>
+
+        {/* ================= TOKEN SPOTLIGHT CARDS ================= */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Card 1: Currently Serving */}
+          <div className="bg-slate-900 text-white rounded-lg p-5 shadow-sm border border-slate-800 flex flex-col justify-between">
+            <div>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                Currently Inside Consultation Room
+              </span>
+              <div className="text-4xl font-extrabold text-white font-mono mt-2">
+                Token #{servingItem ? servingItem.tokenNumber : "102"}
+              </div>
+              <p className="text-xs text-slate-300 mt-1">
+                General Medicine • Room 4 (Dr. Arvind Saxena)
+              </p>
+            </div>
+            <div className="pt-3 mt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span>Avg Consult Duration</span>
+              <span className="font-mono text-slate-200 font-bold">12-15 Mins</span>
+            </div>
+          </div>
+
+          {/* Card 2: My Token Position */}
+          <div className="bg-white border-2 border-sky-600 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-sky-800 uppercase tracking-wider">
+                  Your Digital OPD Token
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Confirmed
+                </span>
+              </div>
+              <div className="text-4xl font-extrabold text-sky-700 font-mono mt-2">
+                Token #{myToken}
+              </div>
+              <p className="text-xs font-semibold text-slate-800 mt-1">
+                {myIndex === servingIndex ? "It is your turn! Please enter Room 4." : `${patientsBeforeMe} patient(s) ahead of you`}
+              </p>
+            </div>
+            <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span>Est. Wait Time</span>
+              <span className="font-mono text-slate-900 font-bold">
+                {myIndex === servingIndex ? "0 Min (Now)" : `~${estimatedWaitTime} Minutes`}
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Queue Summary Stats */}
+          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+            <div>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                Corridor Queue Metrics
+              </span>
+              <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                <div className="p-2 rounded bg-slate-50 border border-slate-100">
+                  <p className="text-xl font-bold text-slate-900 font-mono">{waitingCount}</p>
+                  <p className="text-[10px] text-slate-500">Waiting</p>
+                </div>
+                <div className="p-2 rounded bg-emerald-50 border border-emerald-100">
+                  <p className="text-xl font-bold text-emerald-700 font-mono">{servingCount}</p>
+                  <p className="text-[10px] text-emerald-600">Serving</p>
+                </div>
+                <div className="p-2 rounded bg-slate-50 border border-slate-100">
+                  <p className="text-xl font-bold text-slate-400 font-mono">{completedCount}</p>
+                  <p className="text-[10px] text-slate-400">Done</p>
+                </div>
+              </div>
+            </div>
+            <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span>Shift Progress</span>
+              <span className="font-mono text-slate-900 font-bold">64% Checked In</span>
             </div>
           </div>
         </div>
 
-        {/* ALERT BANNER */}
-        {alertMsg && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl flex items-center gap-3">
-            <AlertCircle className="text-blue-600" size={20} />
-            <p className="text-blue-800 font-medium">{alertMsg}</p>
-            <button className="ml-auto text-sm text-blue-600 hover:text-blue-800 font-medium">
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {/* STATS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <StatCard icon={Users} label="Total Waiting" value={waitingCount} color="bg-blue-500" />
-          <StatCard icon={Activity} label="Currently Serving" value={servingCount} color="bg-green-500" />
-          <StatCard icon={CheckCircle} label="Completed Today" value={completedCount} color="bg-purple-500" />
-          <StatCard icon={Clock} label="Avg Wait Time" value="18 min" color="bg-orange-500" />
-        </div>
-
-        {/* MAIN CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* LEFT COLUMN - MY STATUS */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* MY TOKEN CARD */}
-            {myToken && myIndex !== -1 && (
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-bold">Your Current Status</h2>
-                    <p className="text-blue-200 text-sm">Token #{myToken} • {queue[myIndex]?.department}</p>
-                  </div>
-                  <div className="bg-white/20 p-3 rounded-xl">
-                    <Clock size={24} />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center p-4 bg-white/10 rounded-xl">
-                    <p className="text-sm opacity-80">Position</p>
-                    <p className="text-3xl font-bold">{patientsBeforeMe + 1}</p>
-                  </div>
-                  <div className="text-center p-4 bg-white/10 rounded-xl">
-                    <p className="text-sm opacity-80">Est. Wait</p>
-                    <p className="text-3xl font-bold">{estimatedWaitTime}<span className="text-lg">min</span></p>
-                  </div>
-                  <div className="text-center p-4 bg-white/10 rounded-xl">
-                    <p className="text-sm opacity-80">Department</p>
-                    <p className="text-xl font-bold">{queue[myIndex]?.department}</p>
-                  </div>
-                </div>
-
-                {/* PROGRESS */}
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>Queue Progress</span>
-                    <span>{Math.round(progressPercent)}%</span>
-                  </div>
-                  <div className="h-3 w-full rounded-full bg-white/20 overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-green-400 to-blue-400 transition-all duration-700 ease-out"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                </div>
+        {/* ================= QUEUE TABLE & SIDE PANEL ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Queue Sequence Table (8 Cols) */}
+          <div className="lg:col-span-8 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-sky-700" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Live Token Sequence
+                </h3>
               </div>
-            )}
+              <span className="text-[11px] text-slate-400">Anonymized for patient privacy</span>
+            </div>
 
-            {/* QUEUE VISUALIZATION */}
-            <div className="bg-white rounded-2xl border p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Live Queue Visualization</h3>
-                <div className="flex gap-2">
-                  {["all", "today", "upcoming"].map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => setTimeFilter(filter as any)}
-                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
-                        timeFilter === filter
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* QUEUE LIST */}
-              <div className="space-y-3">
-                {queue.map((q) => {
-                  const isMe = q.tokenNumber === myToken;
-                  const isServing = q.status === "serving";
-                  const urgency = urgencyConfig[q.urgency];
-                  const status = statusConfig[q.status];
-
-                  return (
-                    <div
-                      key={q.tokenNumber}
-                      className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
-                        isMe
-                          ? "border-blue-500 bg-blue-50 shadow-md"
-                          : isServing
-                          ? "border-green-500 bg-gradient-to-r from-green-50 to-white"
-                          : "border-gray-100 bg-white hover:shadow-sm"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${
-                          isMe ? "bg-blue-100" : "bg-gray-50"
-                        }`}>
-                          <span className={`text-lg font-bold ${urgency.text}`}>
-                            #{q.tokenNumber}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold text-gray-900">
-                              {q.patientName}
-                              {isMe && (
-                                <span className="ml-2 text-sm text-blue-600 font-medium">(You)</span>
-                              )}
-                            </p>
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
-                              {status.icon}
-                              {q.status.toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-sm text-gray-500">
-                            <span>{q.department}</span>
-                            <span>•</span>
-                            <span>Checked in: {q.checkInTime}</span>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <span className={`h-2 w-2 rounded-full ${urgency.color}`} />
-                              {urgency.label}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">{q.estimatedDuration} min</p>
-                        <p className="text-sm text-gray-500">Est. duration</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/40 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Token</th>
+                    <th className="py-3 px-4">Patient</th>
+                    <th className="py-3 px-4">Check-In</th>
+                    <th className="py-3 px-4">Triage Priority</th>
+                    <th className="py-3 px-4 text-right">Queue Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {queue.map((item) => {
+                    const isMe = item.tokenNumber === myToken;
+                    return (
+                      <tr
+                        key={item.tokenNumber}
+                        className={`transition-colors ${
+                          isMe
+                            ? "bg-sky-50/70 font-semibold"
+                            : item.status === "serving"
+                            ? "bg-emerald-50/40"
+                            : "hover:bg-slate-50"
+                        }`}
+                      >
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                          #{item.tokenNumber}
+                          {isMe && <span className="ml-1 text-[10px] text-sky-700">(You)</span>}
+                        </td>
+                        <td className="py-3 px-4 text-slate-800">{item.patientName}</td>
+                        <td className="py-3 px-4 font-mono text-slate-500">{item.checkInTime}</td>
+                        <td className="py-3 px-4">{getUrgencyBadge(item.urgency)}</td>
+                        <td className="py-3 px-4 text-right">{getStatusPill(item.status)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* RIGHT COLUMN - SIDEBAR */}
-          <div className="space-y-6">
-            
-            {/* DEPARTMENTS */}
-            <div className="bg-white rounded-2xl border p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Department Status</h3>
-              <div className="space-y-4">
+          {/* Department Telemetry & Hospital Desk (4 Cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Department Breakdown */}
+            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Department Corridors
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">Live</span>
+              </div>
+
+              <div className="space-y-2">
                 {departments.map((dept) => (
-                  <DepartmentCard key={dept.name} dept={dept} />
-                ))}
-              </div>
-            </div>
-
-            {/* UPCOMING PATIENTS */}
-            <div className="bg-white rounded-2xl border p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Next in Line</h3>
-              <div className="space-y-4">
-                {upcomingPatients.map((patient, idx) => (
-                  <div key={patient.tokenNumber} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                    <div>
-                      <p className="font-semibold">Token #{patient.tokenNumber}</p>
-                      <p className="text-sm text-gray-500">{patient.patientName}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900">~{idx * 7 + 7} min</p>
-                      <p className="text-xs text-gray-500">Est. wait</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* NOTIFICATIONS */}
-            <div className="bg-white rounded-2xl border p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Notifications</h3>
-                <span className="text-sm text-blue-600 cursor-pointer">Mark all read</span>
-              </div>
-              <div className="space-y-3">
-                {notifications.map((notif) => (
-                  <div 
-                    key={notif.id} 
-                    className={`p-3 rounded-lg border-l-4 ${
-                      notif.read 
-                        ? "border-l-gray-300 bg-gray-50" 
-                        : "border-l-blue-500 bg-blue-50"
-                    }`}
+                  <div
+                    key={dept.name}
+                    className="p-3 rounded-md bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
                   >
-                    <p className="font-medium">{notif.message}</p>
-                    <p className="text-sm text-gray-500 mt-1">{notif.time}</p>
+                    <div>
+                      <p className="font-semibold text-slate-800">{dept.name}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">{dept.waiting} waiting in queue</p>
+                    </div>
+                    <div className="text-right font-mono">
+                      <span className="text-xs font-bold text-slate-900">~{dept.avgWait}m</span>
+                      <span className="block text-[10px] text-slate-400">Avg Wait</span>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* QUICK ACTIONS */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button className="p-3 bg-white rounded-xl border hover:shadow-md transition text-center">
-                  <span className="block font-medium">Reschedule</span>
-                </button>
-                <button className="p-3 bg-white rounded-xl border hover:shadow-md transition text-center">
-                  <span className="block font-medium">Get Directions</span>
-                </button>
-                <button className="p-3 bg-white rounded-xl border hover:shadow-md transition text-center">
-                  <span className="block font-medium">Share Status</span>
-                </button>
-                <button className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition text-center">
-                  <span className="block font-medium">Help</span>
-                </button>
+            {/* Live Alerts Notification Panel */}
+            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <Bell className="h-3.5 w-3.5 text-sky-700" />
+                  <span>OPD Announcements</span>
+                </div>
               </div>
+
+              <div className="space-y-2">
+                {notifications.map((n) => (
+                  <div key={n.id} className="p-3 rounded-md bg-sky-50/50 border border-sky-100 text-xs space-y-1">
+                    <p className="font-semibold text-slate-800 leading-snug">{n.message}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">{n.time}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reception Helpline */}
+            <div className="p-4 rounded-lg bg-slate-900 text-white space-y-2 border border-slate-800">
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-sky-400" />
+                <span className="text-xs font-bold uppercase tracking-wider">OPD Reception Help</span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                If you have missed your token call, please report to Reception Counter Desk 2 immediately.
+              </p>
+              <p className="font-mono text-xs text-sky-400 font-bold">Extension: #402</p>
             </div>
           </div>
-        </div>
-
-        {/* FOOTER */}
-        <div className="mt-8 text-center text-gray-500 text-sm">
-          <p>Queue updates every 30 seconds • Last updated: {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-          <p className="mt-2">Need assistance? Contact hospital reception at extension 1234</p>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

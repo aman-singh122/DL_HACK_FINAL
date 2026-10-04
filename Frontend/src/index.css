@@ -4,105 +4,107 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer base {
   :root {
-    /* Medical Blue - Primary brand color */
-    --primary: 210 90% 45%;
+    /* Healthcare Trust Blue - Primary brand color (accessible, clinical) */
+    --primary: 204 94% 40%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 210 85% 96%;
-    --primary-dark: 210 90% 35%;
+    --primary-light: 204 90% 96%;
+    --primary-dark: 204 94% 30%;
 
-    /* Healing Teal - Accent for health/success */
-    --accent: 168 76% 42%;
+    /* Healthcare Healing Teal - Accent for wellness, verified status */
+    --accent: 173 80% 36%;
     --accent-foreground: 0 0% 100%;
-    --accent-light: 168 70% 95%;
+    --accent-light: 173 70% 96%;
 
-    /* Warm Orange - For CTAs and highlights */
-    --highlight: 25 95% 53%;
+    /* Medical Alert Amber - For triage warnings & pending items */
+    --highlight: 38 92% 50%;
     --highlight-foreground: 0 0% 100%;
 
-    /* Neutral backgrounds */
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    /* Professional Healthcare Light Background */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
+    /* Crisp White Clinical Cards & Surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    --secondary: 210 15% 96%;
-    --secondary-foreground: 215 20% 35%;
+    --secondary: 210 28% 95%;
+    --secondary-foreground: 215 25% 27%;
 
-    --muted: 210 15% 94%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 210 28% 95%;
+    --muted-foreground: 215 16% 47%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 210 90% 45%;
+    /* Precise clinical borders */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 204 94% 40%;
 
-    --radius: 0.75rem;
+    /* Standard clinical border radius: 8px (0.5rem) */
+    --radius: 0.5rem;
 
-    /* Sidebar - Dashboard specific */
-    --sidebar-background: 215 30% 12%;
+    /* Professional Clinical Sidebar */
+    --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 210 90% 55%;
+    --sidebar-primary: 204 94% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 25% 18%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 215 25% 20%;
-    --sidebar-ring: 210 90% 55%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 217 33% 18%;
+    --sidebar-ring: 204 94% 50%;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(215 25% 15% / 0.08), 0 2px 4px -2px hsl(215 25% 15% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.08), 0 4px 6px -4px hsl(215 25% 15% / 0.05);
-    --shadow-card: 0 2px 8px -2px hsl(210 90% 45% / 0.08), 0 4px 16px -4px hsl(215 25% 15% / 0.06);
+    /* Restrained, crisp shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+    --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
   }
 
   .dark {
-    --background: 215 30% 8%;
-    --foreground: 210 20% 95%;
+    --background: 222 47% 9%;
+    --foreground: 210 20% 96%;
 
-    --card: 215 28% 12%;
-    --card-foreground: 210 20% 95%;
+    --card: 222 47% 12%;
+    --card-foreground: 210 20% 96%;
 
-    --popover: 215 28% 12%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 222 47% 12%;
+    --popover-foreground: 210 20% 96%;
 
-    --primary: 210 85% 55%;
+    --primary: 204 94% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 210 40% 20%;
-    --primary-dark: 210 85% 65%;
+    --primary-light: 204 50% 18%;
+    --primary-dark: 204 94% 60%;
 
-    --secondary: 215 25% 18%;
+    --secondary: 217 33% 17%;
     --secondary-foreground: 210 20% 90%;
 
-    --muted: 215 25% 20%;
-    --muted-foreground: 215 15% 60%;
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 168 70% 45%;
+    --accent: 173 70% 45%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 50%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 20%;
-    --input: 215 25% 20%;
-    --ring: 210 85% 55%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 204 94% 50%;
 
-    --sidebar-background: 215 35% 8%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 210 85% 55%;
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 204 94% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 28% 14%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 215 25% 16%;
-    --sidebar-ring: 210 85% 55%;
+    --sidebar-accent: 217 33% 15%;
+    --sidebar-accent-foreground: 210 20% 96%;
+    --sidebar-border: 217 33% 16%;
+    --sidebar-ring: 204 94% 50%;
   }
 }
 
@@ -114,38 +116,50 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-semibold tracking-tight;
+    @apply font-display font-semibold tracking-tight text-slate-900;
   }
 }
 
 @layer utilities {
-  .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
+  /* Subtle medical background tint */
+  .bg-clinical-canvas {
+    background-color: #F8FAFC;
   }
 
-  .gradient-accent {
-    background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(168 76% 35%) 100%);
+  /* Restrained, high-clarity clinical card */
+  .clinical-card {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05);
+    transition: all 0.2s ease-in-out;
   }
 
-  .gradient-hero {
-    background: linear-gradient(135deg, hsl(210 90% 98%) 0%, hsl(168 70% 97%) 50%, hsl(210 85% 96%) 100%);
+  .clinical-card-hover {
+    background-color: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
   }
 
-  .shadow-card {
-    box-shadow: var(--shadow-card);
+  /* Custom clinical scrollbar */
+  .clinical-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-
-  .shadow-card-hover {
-    box-shadow: 0 8px 25px -5px hsl(210 90% 45% / 0.12), 0 8px 20px -6px hsl(215 25% 15% / 0.08);
+  .clinical-scrollbar::-webkit-scrollbar-track {
+    background: #F1F5F9;
   }
-
-  .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .clinical-scrollbar::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 9999px;
+  }
+  .clinical-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
   }
 }

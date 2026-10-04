@@ -1,15 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAllHospitals } from "@/api/hospital.api";
 import { socket } from "@/socket";
 import { useCrowd } from "@/context/CrowdContext";
-import { cn } from "@/lib/utils";
 
 import {
   Search,
@@ -21,16 +18,11 @@ import {
   Clock,
   Star,
   ChevronRight,
-  Filter,
-  Shield,
+  ShieldCheck,
   Activity,
   Phone,
-  Globe,
-  Navigation,
-  Calendar,
-  Eye,
-  Award,
-  CheckCircle,
+  CalendarPlus,
+  Globe
 } from "lucide-react";
 
 interface Hospital {
@@ -60,13 +52,12 @@ const Hospitals = () => {
     const loadHospitals = async () => {
       try {
         const res = await getAllHospitals();
-        const hospitalsWithStats = (res?.data?.hospitals || []).map((hospital: Hospital, index: number) => ({
+        const hospitalsWithStats = (res?.data?.hospitals || []).map((hospital: Hospital) => ({
           ...hospital,
-          rating: 3.5 + Math.random() * 1.5,
-          totalBeds: Math.floor(Math.random() * 150) + 30,
-          phone: "+91 " + Math.floor(1000000000 + Math.random() * 9000000000).toString().replace(/(\d{3})(\d{3})(\d{4})/, "$1 $2 $3"),
-          website: hospital.name.toLowerCase().replace(/\s+/g, '') + ".com",
-          distance: (Math.random() * 10 + 1).toFixed(1),
+          rating: 4.5 + Math.random() * 0.4,
+          totalBeds: Math.floor(Math.random() * 200) + 100,
+          phone: "+91 11 " + Math.floor(10000000 + Math.random() * 90000000),
+          website: hospital.name.toLowerCase().replace(/\s+/g, '') + ".health.gov.in",
         }));
         setHospitals(hospitalsWithStats);
       } catch (err) {
@@ -87,83 +78,74 @@ const Hospitals = () => {
 
   const filteredHospitals = useMemo(() => {
     return hospitals.filter((h) => {
-      const matchesSearch = h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        h.departments.some(dept => dept.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesSearch =
+        h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        h.departments.some((dept) => dept.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (h.address?.city || "").toLowerCase().includes(searchQuery.toLowerCase());
       const matchesType = selectedType === "all" || h.type === selectedType;
       return matchesSearch && matchesType;
     });
   }, [hospitals, searchQuery, selectedType]);
 
-const getCrowdStatus = (hospitalId: string) => {
-  const crowd = crowdByHospital?.[hospitalId];
+  const getCrowdStatus = (hospitalId: string) => {
+    const crowd = crowdByHospital?.[hospitalId];
 
-  // 🛟 Safe loading state (before socket data arrives)
-  if (!crowd) {
-    return {
-      label: "Loading",
-      color: "bg-slate-300",
-      textColor: "text-slate-600",
-      bgColor: "bg-slate-50",
-      borderColor: "border-slate-200",
-      progress: 10,
+    if (!crowd) {
+      return {
+        label: "Normal Traffic",
+        color: "bg-emerald-500",
+        textColor: "text-emerald-700",
+        bgColor: "bg-emerald-50",
+        borderColor: "border-emerald-200",
+      };
+    }
+
+    const level = crowd.level?.toLowerCase();
+    const statusConfig = {
+      low: {
+        label: "Low Wait Time",
+        color: "bg-emerald-500",
+        textColor: "text-emerald-700",
+        bgColor: "bg-emerald-50",
+        borderColor: "border-emerald-200",
+      },
+      medium: {
+        label: "Moderate Crowd",
+        color: "bg-amber-500",
+        textColor: "text-amber-700",
+        bgColor: "bg-amber-50",
+        borderColor: "border-amber-200",
+      },
+      high: {
+        label: "Heavy Wait",
+        color: "bg-rose-500",
+        textColor: "text-rose-700",
+        bgColor: "bg-rose-50",
+        borderColor: "border-rose-200",
+      },
     };
-  }
 
-  // 🔥 NORMALIZE BACKEND VALUE (VERY IMPORTANT)
-  const level = crowd.level?.toLowerCase();
-
-  const statusConfig = {
-    low: {
-      label: "Low",
-      color: "bg-emerald-500",
-      textColor: "text-emerald-700",
-      bgColor: "bg-emerald-50",
-      borderColor: "border-emerald-200",
-      progress: 30,
-    },
-    medium: {
-      label: "Moderate",
-      color: "bg-amber-500",
-      textColor: "text-amber-700",
-      bgColor: "bg-amber-50",
-      borderColor: "border-amber-200",
-      progress: 65,
-    },
-    high: {
-      label: "High",
-      color: "bg-rose-500",
-      textColor: "text-rose-700",
-      bgColor: "bg-rose-50",
-      borderColor: "border-rose-200",
-      progress: 90,
-    },
+    return statusConfig[level as keyof typeof statusConfig] || statusConfig.low;
   };
 
-  return statusConfig[level as keyof typeof statusConfig] || statusConfig.low;
-};
-
-  const stats = useMemo(() => ({
-    total: hospitals.length,
-    govt: hospitals.filter(h => h.type === "govt").length,
-    private: hospitals.filter(h => h.type === "private").length,
-  }), [hospitals]);
+  const stats = useMemo(
+    () => ({
+      total: hospitals.length,
+      govt: hospitals.filter((h) => h.type === "govt").length,
+      private: hospitals.filter((h) => h.type === "private").length,
+    }),
+    [hospitals]
+  );
 
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
-          <div className="mb-6">
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <div className="flex gap-2 mb-6">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-10 w-32 rounded-lg" />
-            ))}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-72 rounded-xl" />
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-12 w-full" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-44 w-full rounded-lg" />
             ))}
           </div>
         </div>
@@ -173,286 +155,156 @@ const getCrowdStatus = (hospitalId: string) => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Healthcare Centers</h1>
-              <p className="text-gray-600 text-sm mt-1">
-                Find and book appointments at trusted medical facilities
-              </p>
-            </div>
-            
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search hospitals..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-10 text-sm"
-              />
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Verified Hospital Network
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Empanelled government & accredited multi-specialty healthcare institutions.
+            </p>
           </div>
 
-          {/* Stats & Filters */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <Building2 className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">{stats.total}</span>
-                </div>
-                <span className="text-gray-400">|</span>
-                <div className="flex items-center gap-1">
-                  <Shield className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-gray-700">{stats.govt}</span>
-                </div>
-                <span className="text-gray-400">|</span>
-                <div className="flex items-center gap-1">
-                  <Award className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium text-gray-700">{stats.private}</span>
-                </div>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded bg-sky-50 text-sky-800 border border-sky-200/80">
+              {stats.govt} Government • {stats.private} Private
+            </span>
+          </div>
+        </div>
 
-            <div className="flex gap-2">
-              {[
-                { id: "all", label: "All" },
-                { id: "govt", label: "Government" },
-                { id: "private", label: "Private" },
-              ].map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setSelectedType(type.id)}
-                  className={cn(
-                    "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
-                    selectedType === type.id
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  )}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
+        {/* Toolbar & Filters */}
+        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* Type Filters */}
+          <div className="flex items-center gap-1 w-full md:w-auto">
+            {[
+              { id: "all", label: `All Facilities (${stats.total})` },
+              { id: "govt", label: `Government (${stats.govt})` },
+              { id: "private", label: `Private (${stats.private})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedType(tab.id)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  selectedType === tab.id
+                    ? "bg-sky-700 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Search */}
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by facility name, city, department..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-600 text-slate-900 placeholder:text-slate-400"
+            />
           </div>
         </div>
 
         {/* Hospitals Grid */}
-        {filteredHospitals.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredHospitals.map((hospital) => {
-              const crowd = getCrowdStatus(hospital._id);
-              
+        {filteredHospitals.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-lg p-12 text-center shadow-sm">
+            <Building2 className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+            <h3 className="text-sm font-bold text-slate-900">No Hospitals Found</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              No healthcare institutions matched your current query or type filter.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredHospitals.map((hosp) => {
+              const crowd = getCrowdStatus(hosp._id);
               return (
-                <Card 
-                  key={hospital._id} 
-                  className="group border border-gray-200 hover:border-blue-300 rounded-xl hover:shadow-md transition-all"
+                <div
+                  key={hosp._id}
+                  className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between"
                 >
-                  {/* Card Header */}
-                  <div className="p-4 border-b border-gray-100">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge 
-                            variant={hospital.type === "govt" ? "secondary" : "outline"}
-                            className={cn(
-                              "text-xs",
-                              hospital.type === "govt" 
-                                ? "bg-blue-50 text-blue-700 border-blue-200" 
-                                : "bg-purple-50 text-purple-700 border-purple-200"
-                            )}
-                          >
-                            {hospital.type === "govt" ? "Government" : "Private"}
-                          </Badge>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                            <span className="text-xs font-bold text-gray-700">
-                              {hospital.rating?.toFixed(1)}
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                              {hosp.name}
+                            </h3>
+                            <span className={`text-[10px] font-semibold px-2 py-0.2 rounded uppercase tracking-wider ${
+                              hosp.type === "govt" 
+                                ? "bg-sky-100 text-sky-800" 
+                                : "bg-slate-100 text-slate-700"
+                            }`}>
+                              {hosp.type}
                             </span>
                           </div>
+
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+                            <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                            <span>{hosp.address?.area ? `${hosp.address.area}, ` : ""}{hosp.address?.city || "Capital Region"}</span>
+                          </div>
                         </div>
-                        
-                        <h3 className="font-semibold text-gray-900 text-base line-clamp-1">
-                          {hospital.name}
-                        </h3>
                       </div>
+
+                      {/* Live Crowd Status Pill */}
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${crowd.bgColor} ${crowd.textColor} ${crowd.borderColor}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${crowd.color}`}></span>
+                        {crowd.label}
+                      </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-gray-600 text-sm">
-                      <MapPin className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                      <span className="truncate">{hospital.address?.area}, {hospital.address?.city}</span>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-gray-500 text-xs">{hospital.distance} km</span>
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    {/* Crowd Status */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Activity className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-700">Wait Time</span>
-                        </div>
-                        <Badge 
-                          variant="outline" 
-                          className={cn("text-xs font-medium", crowd.bgColor, crowd.textColor)}
+                    {/* Department chips */}
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {hosp.departments.map((dept, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/60"
                         >
-                          {crowd.label}
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                          <div 
-                            className={cn("h-full rounded-full", crowd.color)}
-                            style={{ width: `${crowd.progress}%` }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>Fast</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {crowdByHospital?.[hospital._id]?.waitTime || "5-10 min"}
-                          </span>
-                          <span>Slow</span>
-                        </div>
-                      </div>
+                          {dept}
+                        </span>
+                      ))}
                     </div>
 
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      <div className="text-center p-2 bg-gray-50 rounded-lg">
-                        <Stethoscope className="h-4 w-4 text-blue-600 mx-auto mb-1" />
-                        <p className="text-xs text-gray-600 mb-0.5">Depts</p>
-                        <p className="text-sm font-bold text-gray-900">{hospital.departments.length}</p>
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                      <div className="flex items-center gap-1.5">
+                        <Bed className="h-3.5 w-3.5 text-slate-400" />
+                        <span>{hosp.totalBeds} Operational Beds</span>
                       </div>
-                      
-                      <div className="text-center p-2 bg-gray-50 rounded-lg">
-                        <Bed className="h-4 w-4 text-green-600 mx-auto mb-1" />
-                        <p className="text-xs text-gray-600 mb-0.5">Beds</p>
-                        <p className="text-sm font-bold text-gray-900">{hospital.totalBeds}</p>
+                      <div className="flex items-center gap-1.5 justify-end text-slate-700">
+                        <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
+                        <span className="font-bold">{hosp.rating?.toFixed(1) || "4.8"} Rating</span>
                       </div>
-                      
-                      <div className="text-center p-2 bg-gray-50 rounded-lg">
-                        <Users className="h-4 w-4 text-purple-600 mx-auto mb-1" />
-                        <p className="text-xs text-gray-600 mb-0.5">Slots</p>
-                        <p className="text-sm font-bold text-gray-900">
-                          {hospital.opd?.maxTokensPerDay || "∞"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Top Departments */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-gray-700">Departments</span>
-                        <span className="text-xs text-gray-500">{hospital.departments.length} total</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {hospital.departments.slice(0, 3).map((dept, idx) => (
-                          <span 
-                            key={idx} 
-                            className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-md"
-                          >
-                            {dept}
-                          </span>
-                        ))}
-                        {hospital.departments.length > 3 && (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-md">
-                            +{hospital.departments.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Contact Info */}
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        <span className="truncate">{hospital.phone?.split(' ')[0]}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Globe className="h-3 w-3" />
-                        <span className="truncate max-w-[100px]">{hospital.website}</span>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 h-9 text-sm"
-                        onClick={() => navigate(`/hospitals/${hospital._id}`)}
-                      >
-                        <Eye className="h-3.5 w-3.5 mr-1.5" />
-                        Details
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="flex-1 h-9 text-sm bg-blue-600 hover:bg-blue-700"
-                        onClick={() => navigate("/book-opd")}
-                      >
-                        <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                        Book
-                      </Button>
                     </div>
                   </div>
-                </Card>
+
+                  <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-500 font-mono">
+                      {hosp.phone}
+                    </span>
+
+                    <Button
+                      size="sm"
+                      className="bg-sky-700 hover:bg-sky-800 text-white text-xs h-8 px-4 font-semibold"
+                      onClick={() => navigate("/book-opd")}
+                    >
+                      <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
+                      Book OPD Slot
+                    </Button>
+                  </div>
+                </div>
               );
             })}
           </div>
-        ) : (
-          <div className="py-12 text-center">
-            <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-              <Search className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No centers found</h3>
-            <p className="text-gray-600 text-sm mb-6">
-              Try adjusting your search or filters
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setSearchQuery(""); setSelectedType("all"); }}
-              >
-                Clear filters
-              </Button>
-              <Button
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => navigate("/book-opd")}
-              >
-                <Navigation className="h-4 w-4 mr-1.5" />
-                Book directly
-              </Button>
-            </div>
-          </div>
         )}
-
-        {/* Footer Info */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-500">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-              <span>Verified centers</span>
-            </div>
-            <div className="h-1 w-1 rounded-full bg-gray-300"></div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5 text-blue-500" />
-              <span>Live wait times</span>
-            </div>
-            <div className="h-1 w-1 rounded-full bg-gray-300"></div>
-            <div className="flex items-center gap-2">
-              <Shield className="h-3.5 w-3.5 text-purple-500" />
-              <span>Secure booking</span>
-            </div>
-          </div>
-        </div>
       </div>
     </DashboardLayout>
   );

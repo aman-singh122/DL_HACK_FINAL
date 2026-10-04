@@ -1,14 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 /* ================= UI PROVIDERS ================= */
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import MediAI from "@/pages/MediAI";
-
-
-/* ================= CONTEXT ================= */
-import { NotificationProvider } from "@/context/NotificationContext";
 
 /* ================= AUTH ================= */
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -46,151 +42,168 @@ import UploadReport from "@/hospital/pages/UploadReport";
 
 const App = () => {
   return (
-    <NotificationProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
 
-        <BrowserRouter>
-          <Routes>
-            {/* ================= PUBLIC ROUTES ================= */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/service" element={<Services />} />
+      <Routes>
+        {/* ================= PUBLIC ROUTES ================= */}
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/service" element={<Services />} />
 
-            {/* ================= PATIENT ROUTES ================= */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
+        {/* ================= PATIENT ROUTES ================= */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-            <Route
-              path="/book-opd"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <BookOPD />
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/book-opd"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <BookOPD />
+            </ProtectedRoute>
+          }
+        />
 
-            <Route
-              path="/appointments"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <Appointments />
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/appointments"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <Appointments />
+            </ProtectedRoute>
+          }
+        />
 
-            <Route
-              path="/appointments/:id"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <AppointmentDetail />
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/appointments/:id"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <AppointmentDetail />
+            </ProtectedRoute>
+          }
+        />
 
-            {/* ✅ LIVE QUEUE ROUTE */}
-            <Route
-              path="/live-queue/:queueId"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <PatientQueue />
-                </ProtectedRoute>
-              }
-            />
+        {/* ================= LIVE QUEUE ROUTE ================= */}
+        <Route
+          path="/live-queue/:queueId"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <PatientQueue />
+            </ProtectedRoute>
+          }
+        />
 
-            <Route
-              path="/records"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <MedicalRecords />
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/records"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <MedicalRecords />
+            </ProtectedRoute>
+          }
+        />
 
-            {/* ================= VIDEO CONSULTATION ================= */}
-            <Route
-              path="/room/:appointmentId"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <Room />
-                </ProtectedRoute>
-              }
-            />
+        {/* ================= VIDEO CONSULTATION ================= */}
+        <Route
+          path="/room/:appointmentId"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <Room />
+            </ProtectedRoute>
+          }
+        />
 
-            <Route
-              path="/consult"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <Consultation />
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/consult"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <Consultation />
+            </ProtectedRoute>
+          }
+        />
 
-            <Route
-              path="/consult/book/:doctorId"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <OnlineBooking />
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/consult/book/:doctorId"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <OnlineBooking />
+            </ProtectedRoute>
+          }
+        />
 
-            <Route
-              path="/doctors"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <Doctors />
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/doctors"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <Doctors />
+            </ProtectedRoute>
+          }
+        />
 
-            <Route
-              path="/hospitals"
-              element={
-                <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
-                  <Hospitals />
-                </ProtectedRoute>
-              }
-            />
+        <Route
+          path="/hospitals"
+          element={
+            <ProtectedRoute allowedRoles={["USER", "PATIENT"]}>
+              <Hospitals />
+            </ProtectedRoute>
+          }
+        />
 
-                <Route path="/medichat" element={<MediAI />} />
+        {/* ================= MEDI AI ================= */}
+        <Route path="/medichat" element={<MediAI />} />
 
+        {/* ================= 🏥 HOSPITAL ROUTES ================= */}
+        <Route
+          path="/hospital"
+          element={
+            <ProtectedRoute allowedRoles={["HOSPITAL", "ADMIN"]}>
+              <HospitalLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
 
-            {/* ================= 🏥 HOSPITAL ROUTES ================= */}
-            <Route
-              path="/hospital"
-              element={
-                <ProtectedRoute allowedRoles={["HOSPITAL", "ADMIN"]}>
-                  <HospitalLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<HospitalDashboard />} />
-              <Route path="appointments" element={<HospitalAppointments />} />
-              <Route path="patients" element={<HospitalPatients />} />
-              <Route path="doctors" element={<HospitalDoctors />} />
-              <Route path="records" element={<HospitalRecords />} />
-              <Route
-                path="upload-report/:appointmentId"
-                element={<UploadReport />}
-              />
-            </Route>
+          <Route
+            path="dashboard"
+            element={<HospitalDashboard />}
+          />
 
-            {/* ================= FALLBACK ================= */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </NotificationProvider>
+          <Route
+            path="appointments"
+            element={<HospitalAppointments />}
+          />
+
+          <Route
+            path="patients"
+            element={<HospitalPatients />}
+          />
+
+          <Route
+            path="doctors"
+            element={<HospitalDoctors />}
+          />
+
+          <Route
+            path="records"
+            element={<HospitalRecords />}
+          />
+
+          <Route
+            path="upload-report/:appointmentId"
+            element={<UploadReport />}
+          />
+        </Route>
+
+        {/* ================= FALLBACK ================= */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </TooltipProvider>
   );
 };
 

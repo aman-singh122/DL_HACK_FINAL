@@ -9,20 +9,16 @@ import {
   FileText,
   ShieldCheck,
   Activity,
-  Cloud,
-  IndianRupee,
-  User,
-  Globe,
   ArrowRight,
   Sparkles,
-  Heart,
-  Hospital,
   Users,
-  LucideIcon,
+  Video,
+  Clock,
+  CheckCircle2,
+  Award,
+  Phone
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-/* ---------------- TYPES ---------------- */
 
 type Service = {
   title: {
@@ -33,258 +29,197 @@ type Service = {
     en: string;
     hi: string;
   };
-  icon: LucideIcon;
-  color: string;
+  icon: any;
+  features: string[];
+  link: string;
 };
-
-type Feature = {
-  title: {
-    en: string;
-    hi: string;
-  };
-  desc: {
-    en: string;
-    hi: string;
-  };
-  icon: LucideIcon;
-};
-
-type GovtProgram = {
-  title: {
-    en: string;
-    hi: string;
-  };
-  desc: {
-    en: string;
-    hi: string;
-  };
-  icon: LucideIcon;
-};
-
-/* ---------------- DATA ---------------- */
 
 const services: Service[] = [
   {
-    title: { en: "OPD Appointment Booking", hi: "OPD अपॉइंटमेंट बुकिंग" },
+    title: {
+      en: "Outpatient (OPD) Digital Scheduling",
+      hi: "ओपीडी डिजिटल शेड्यूलिंग",
+    },
     desc: {
-      en: "Book OPD appointments instantly at government hospitals with real-time slot availability.",
-      hi: "सरकारी अस्पतालों में तुरंत OPD अपॉइंटमेंट बुक करें।",
+      en: "Direct appointment booking across 40+ departments with hospital slot synchronization and instant token generation.",
+      hi: "40+ विभागों में अस्पताल के लाइव स्लॉट के साथ सीधा अपॉइंटमेंट और तुरंत डिजिटल टोकन।",
     },
     icon: CalendarPlus,
-    color: "from-blue-500 to-cyan-500",
+    features: [
+      "Select specific doctor or department",
+      "Morning and evening outpatient shifts",
+      "Instant SMS confirmation with digital token",
+      "Cancellation and slot rescheduling options",
+    ],
+    link: "/book-opd",
   },
   {
-    title: { en: "Hospital Discovery", hi: "अस्पताल खोजें" },
-    desc: {
-      en: "Find verified government & private hospitals across India.",
-      hi: "भारत भर में सत्यापित सरकारी और निजी अस्पताल खोजें।",
+    title: {
+      en: "Live Queue & Token Monitoring",
+      hi: "लाइव कतार और टोकन ट्रैकिंग",
     },
-    icon: Building2,
-    color: "from-emerald-500 to-teal-500",
-  },
-  {
-    title: { en: "Doctor Consultation", hi: "डॉक्टर परामर्श" },
     desc: {
-      en: "Consult doctors online or offline with digital queue management.",
-      hi: "डिजिटल क्यू मैनेजमेंट के साथ डॉक्टर से परामर्श लें।",
+      en: "Real-time corridor queue telemetry. See current token being served and arrive precisely when your turn arrives.",
+      hi: "रीयल-टाइम कतार ट्रैकिंग। वर्तमान में देखे जा रहे टोकन को लाइव देखें और सही समय पर पहुंचें।",
     },
-    icon: Stethoscope,
-    color: "from-violet-500 to-purple-500",
+    icon: Activity,
+    features: [
+      "WebSocket-driven real-time token counter",
+      "Estimated wait time calculations",
+      "Queue acceleration & delay notifications",
+      "Reduces hospital waiting room congestion",
+    ],
+    link: "/live-queue/QUEUE_1",
   },
   {
-    title: { en: "Digital Medical Records", hi: "डिजिटल मेडिकल रिकॉर्ड" },
+    title: {
+      en: "Telehealth & Remote Virtual Care",
+      hi: "टेलीहेल्थ और रिमोट परामर्श",
+    },
     desc: {
-      en: "Secure lifetime access to prescriptions and reports.",
-      hi: "प्रिस्क्रिप्शन और रिपोर्ट का सुरक्षित डिजिटल रिकॉर्ड।",
+      en: "HIPAA-compliant, encrypted WebRTC tele-consultations with certified clinical specialists from your device.",
+      hi: "प्रमाणित विशेषज्ञ डॉक्टरों के साथ सुरक्षित वीडियो परामर्श और तुरंत डिजिटल पर्ची।",
+    },
+    icon: Video,
+    features: [
+      "End-to-end encrypted audio-video streaming",
+      "In-call diagnostic report sharing",
+      "Digitally verified prescription generation",
+      "Seamless follow-up booking workflow",
+    ],
+    link: "/consult",
+  },
+  {
+    title: {
+      en: "Electronic Health Records (EHR)",
+      hi: "इलेक्ट्रॉनिक हेल्थ रिकॉर्ड (EHR)",
+    },
+    desc: {
+      en: "Unified lifelong clinical record repository compatible with ABDM standards. Access lab reports, scans, and summaries.",
+      hi: "एबीडीएम मानकों के अनुकूल आजीवन मेडिकल रिकॉर्ड। जांच रिपोर्ट, स्कैन और पर्चियां सुरक्षित रखें।",
     },
     icon: FileText,
-    color: "from-amber-500 to-orange-500",
+    features: [
+      "ABDM ABHA health ID integration",
+      "Centralized diagnostic and lab test archive",
+      "Secure PDF report viewing & download",
+      "Authorized provider sharing controls",
+    ],
+    link: "/records",
+  },
+  {
+    title: {
+      en: "Accredited Hospital Network",
+      hi: "सत्यापित अस्पताल नेटवर्क",
+    },
+    desc: {
+      en: "Comprehensive directory of verified NABH/JCI accredited public and private healthcare institutions.",
+      hi: "सत्यापित सरकारी और निजी अस्पतालों, विभागों और सुविधाओं की विस्तृत निर्देशिका।",
+    },
+    icon: Building2,
+    features: [
+      "Location and specialty based filtering",
+      "Real-time OPD crowd status indicators",
+      "Bed occupancy and emergency contact info",
+      "Direct OPD appointment booking links",
+    ],
+    link: "/hospitals",
+  },
+  {
+    title: {
+      en: "Clinical AI Symptom Triage",
+      hi: "क्लिनिकल एआई लक्षण ट्राइएज",
+    },
+    desc: {
+      en: "Clinical decision support system evaluating symptoms, age, and vitals to provide urgency scoring and referral advice.",
+      hi: "लक्षणों, आयु और स्थिति का विश्लेषण कर आपातकालीन स्तर और सही विभाग की सिफारिश।",
+    },
+    icon: Sparkles,
+    features: [
+      "Clinical urgency score (Level 1-5)",
+      "Suspected medical condition categorization",
+      "Specialty department recommendation",
+      "Complete historical triage archive",
+    ],
+    link: "/medichat",
   },
 ];
 
-const features: Feature[] = [
-  {
-    icon: ShieldCheck,
-    title: { en: "Secure & Private", hi: "सुरक्षित और निजी" },
-    desc: {
-      en: "Government-grade data security and encryption.",
-      hi: "सरकारी स्तर की डेटा सुरक्षा और एन्क्रिप्शन।",
-    },
-  },
-  {
-    icon: Activity,
-    title: { en: "Live Hospital Queue", hi: "लाइव अस्पताल क्यू" },
-    desc: {
-      en: "Real-time OPD queue updates.",
-      hi: "रियल-टाइम OPD क्यू अपडेट।",
-    },
-  },
-  {
-    icon: Cloud,
-    title: { en: "Cloud Medical Vault", hi: "क्लाउड मेडिकल वॉल्ट" },
-    desc: {
-      en: "Unlimited cloud storage for medical records.",
-      hi: "मेडिकल रिकॉर्ड के लिए अनलिमिटेड क्लाउड स्टोरेज।",
-    },
-  },
-];
-
-const govtPrograms: GovtProgram[] = [
-  {
-    icon: IndianRupee,
-    title: { en: "Ayushman Bharat", hi: "आयुष्मान भारत" },
-    desc: {
-      en: "₹5 Lakh free treatment coverage.",
-      hi: "₹5 लाख तक का मुफ्त इलाज।",
-    },
-  },
-  {
-    icon: User,
-    title: { en: "ABHA Health ID", hi: "ABHA हेल्थ ID" },
-    desc: {
-      en: "One digital identity for healthcare.",
-      hi: "स्वास्थ्य सेवाओं के लिए एक डिजिटल पहचान।",
-    },
-  },
-  {
-    icon: Globe,
-    title: { en: "Nationwide Access", hi: "राष्ट्रीय पहुंच" },
-    desc: {
-      en: "Available across all states & UTs.",
-      hi: "सभी राज्यों और केंद्र शासित प्रदेशों में उपलब्ध।",
-    },
-  },
-];
-
-/* ---------------- COMPONENT ---------------- */
-
-const Services: React.FC = () => {
+const Services = () => {
   const { language } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       <Navbar />
 
-      {/* HERO */}
-      <section className="pt-16 pb-20 bg-gradient-to-br from-blue-50 via-white to-emerald-50">
-        <div className="container mx-auto px-4 text-center max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-700 font-semibold mb-6">
-            <Sparkles className="h-4 w-4" />
-            {language === "en"
-              ? "Government Healthcare Services"
-              : "सरकारी स्वास्थ्य सेवाएं"}
-          </div>
-
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            {language === "en" ? "Our " : "हमारी "}
-            <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
-              {language === "en" ? "Healthcare Services" : "स्वास्थ्य सेवाएं"}
-            </span>
-          </h1>
-
-          <p className="text-lg text-gray-600 mb-10">
-            {language === "en"
-              ? "One platform for appointments, hospitals, doctors, and digital health records across India."
-              : "भारत भर में अपॉइंटमेंट, अस्पताल, डॉक्टर और डिजिटल हेल्थ रिकॉर्ड के लिए एक प्लेटफॉर्म।"}
-          </p>
-
-          <Link to="/book-opd">
-            <Button className="h-14 px-10 text-lg bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-bold shadow-xl">
-              <CalendarPlus className="mr-3 h-6 w-6" />
-              {language === "en" ? "Book OPD Now" : "OPD बुक करें"}
-              <ArrowRight className="ml-3 h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* SERVICES */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {services.map((service, i) => {
-            const Icon = service.icon;
-            return (
-              <div
-                key={i}
-                className="bg-white rounded-3xl p-8 border shadow-lg hover:shadow-2xl transition"
-              >
-                <div
-                  className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center text-white mb-6`}
-                >
-                  <Icon className="h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">
-                  {service.title[language]}
-                </h3>
-                <p className="text-gray-600">{service.desc[language]}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section className="py-20 bg-blue-50">
-        <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-12">
-          <div>
-            <h2 className="text-3xl font-bold mb-6">
-              {language === "en"
-                ? "Why Choose Our Platform?"
-                : "हमारा प्लेटफॉर्म क्यों चुनें?"}
-            </h2>
-
-            <div className="space-y-6">
-              {features.map((f, i) => {
-                const Icon = f.icon;
-                return (
-                  <div
-                    key={i}
-                    className="flex gap-4 bg-white p-6 rounded-2xl border shadow-sm"
-                  >
-                    <Icon className="h-6 w-6 text-blue-600" />
-                    <div>
-                      <h4 className="font-bold">{f.title[language]}</h4>
-                      <p className="text-gray-600 text-sm">
-                        {f.desc[language]}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+      {/* Header */}
+      <section className="bg-white border-b border-slate-200/80 py-12 lg:py-16">
+        <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 border border-sky-200/80 text-sky-800 text-xs font-semibold mb-4">
+              <ShieldCheck className="h-4 w-4 text-sky-700" />
+              <span>National Healthcare Infrastructure Standards</span>
             </div>
-          </div>
 
-          <div className="bg-gradient-to-br from-blue-600 to-emerald-600 rounded-3xl p-10 text-white text-center">
-            <Heart className="h-14 w-14 mx-auto mb-6 text-red-400" />
-            <h3 className="text-2xl font-bold mb-4">
-              {language === "en" ? "Trusted by Millions" : "लाखों का भरोसा"}
-            </h3>
-            <p className="text-white/90">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
               {language === "en"
-                ? "India's official digital healthcare access platform."
-                : "भारत का आधिकारिक डिजिटल हेल्थ प्लेटफॉर्म।"}
+                ? "Clinical Services & Healthcare Capabilities"
+                : "चिकित्सा सेवाएं एवं स्वास्थ्य सुविधाएं"}
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              {language === "en"
+                ? "MedoSphere delivers end-to-end digital infrastructure connecting patients, clinical practitioners, and hospital systems with unmatched security and efficiency."
+                : "मेडोस्फीयर मरीजों, डॉक्टरों और अस्पतालों को जोड़ने के लिए सुरक्षित और सुगम डिजिटल स्वास्थ्य सेवाएं प्रदान करता है।"}
             </p>
           </div>
         </div>
       </section>
 
-      {/* GOVT PROGRAMS */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-10">
-            {language === "en"
-              ? "Government Healthcare Programs"
-              : "सरकारी स्वास्थ्य योजनाएं"}
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {govtPrograms.map((g, i) => {
-              const Icon = g.icon;
+      {/* Services Grid */}
+      <section className="py-12 lg:py-16">
+        <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {services.map((service, idx) => {
+              const Icon = service.icon;
               return (
-                <div key={i} className="bg-white p-8 rounded-3xl border shadow">
-                  <Icon className="h-10 w-10 mx-auto mb-4 text-emerald-600" />
-                  <h4 className="font-bold mb-2">{g.title[language]}</h4>
-                  <p className="text-gray-600 text-sm">{g.desc[language]}</p>
+                <div
+                  key={idx}
+                  className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center mb-4">
+                      <Icon className="h-5 w-5" />
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 mb-2">
+                      {service.title[language]}
+                    </h3>
+
+                    <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                      {service.desc[language]}
+                    </p>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-100 mb-6">
+                      {service.features.map((feat, fIdx) => (
+                        <div key={fIdx} className="flex items-start gap-2 text-xs text-slate-600">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-sky-700 flex-shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button
+                    asChild
+                    size="sm"
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs rounded-md shadow-sm"
+                  >
+                    <Link to={service.link} className="flex items-center justify-center gap-1.5">
+                      <span>{language === "en" ? "Launch Module" : "सेवा खोलें"}</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
                 </div>
               );
             })}
@@ -292,18 +227,35 @@ const Services: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-center">
-        <h2 className="text-3xl font-bold mb-6">
-          {language === "en"
-            ? "Start Your Healthcare Journey Today"
-            : "आज ही अपनी स्वास्थ्य यात्रा शुरू करें"}
-        </h2>
-        <Link to="/book-opd">
-          <Button className="bg-white text-blue-700 font-bold px-10 py-4">
-            {language === "en" ? "Get Started" : "शुरू करें"}
-          </Button>
-        </Link>
+      {/* ABDM & Security Section */}
+      <section className="py-12 bg-white border-y border-slate-200">
+        <div className="container mx-auto px-4 sm:px-6 max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-lg bg-slate-50 border border-slate-200">
+              <ShieldCheck className="h-6 w-6 text-sky-700 mb-3" />
+              <h4 className="text-sm font-bold text-slate-900 mb-1.5">Ayushman Bharat Integrated</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Connect your 14-digit ABHA address to sync health histories across empanelled healthcare providers nationwide.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-lg bg-slate-50 border border-slate-200">
+              <Award className="h-6 w-6 text-emerald-600 mb-3" />
+              <h4 className="text-sm font-bold text-slate-900 mb-1.5">NABH & HIPAA Compliant</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Data workflows comply with patient privacy regulations, clinical encryption standards, and digital audit logging.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-lg bg-slate-50 border border-slate-200">
+              <Phone className="h-6 w-6 text-sky-700 mb-3" />
+              <h4 className="text-sm font-bold text-slate-900 mb-1.5">24/7 Clinical Support</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Technical and clinical helpline available round-the-clock for appointment rescheduling, triage, and patient queries.
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

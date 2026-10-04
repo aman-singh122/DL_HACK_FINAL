@@ -1,5 +1,28 @@
 import { useState, useEffect } from "react";
 import { runTriageAI, getTriageHistory } from "@/api/ai.api";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Send,
+  User,
+  ShieldCheck,
+  Stethoscope,
+  Building2,
+  CalendarPlus,
+  Video,
+  Info,
+  History,
+  AlertCircle,
+  HelpCircle,
+  Sparkles,
+  Phone
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -7,12 +30,15 @@ interface Message {
   content: string;
   timestamp: Date;
   riskScore?: number;
+  urgencyLevel?: string;
+  category?: string;
+  department?: string;
 }
 
 const MediAI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [age, setAge] = useState<number | "">("");
+  const [age, setAge] = useState<number | "">(28);
   const [gender, setGender] = useState("male");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -23,15 +49,15 @@ const MediAI = () => {
     const fetchHistory = async () => {
       try {
         const res = await getTriageHistory();
-        setHistory(res.data.data);
+        setHistory(res.data?.data || []);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load triage history", error);
       }
     };
     fetchHistory();
   }, []);
 
-  /* ================= SEND MESSAGE (Backend Connected) ================= */
+  /* ================= SEND MESSAGE ================= */
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
@@ -43,476 +69,389 @@ const MediAI = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue("");
     setLoading(true);
 
     try {
       const res = await runTriageAI({
-        symptoms: userMessage.content,
+        symptoms: currentInput,
         age: Number(age) || 0,
         gender,
       });
 
-      const aiData = res.data.data.result || res.data.data;
+      const aiData = res.data?.data?.result || res.data?.data || {};
       setResult(aiData);
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: aiData.explanation,
+        content: aiData.explanation || "Clinical evaluation complete. Please review the triage findings below.",
         timestamp: new Date(),
         riskScore: aiData.risk_score,
+        urgencyLevel: aiData.urgency_level,
+        category: aiData.condition_category,
+        department: aiData.recommended_department,
       };
 
       setMessages((prev) => [...prev, aiMessage]);
 
       const historyRes = await getTriageHistory();
-      setHistory(historyRes.data.data);
-
-    } catch (error) {
+      setHistory(historyRes.data?.data || []);
+    } catch (error: any) {
       console.error(error);
-      alert("AI analysis failed");
+      toast.error("Clinical AI analysis failed. Please verify network connectivity.");
     } finally {
       setLoading(false);
     }
   };
 
-  const getRiskColor = (score: number) => {
-    if (score >= 7) return "text-red-600 bg-red-50";
-    if (score >= 4) return "text-yellow-600 bg-yellow-50";
-    return "text-green-600 bg-green-50";
-  };
-
-  const getRiskBadge = (score: number) => {
-    if (score >= 7) return { text: "High Risk", color: "bg-red-500" };
-    if (score >= 4) return { text: "Moderate", color: "bg-yellow-500" };
-    return { text: "Low Risk", color: "bg-green-500" };
+  const getUrgencyBadge = (level?: string, score?: number) => {
+    const norm = (level || "").toLowerCase();
+    if (norm === "high" || norm === "emergency" || (score && score >= 7)) {
+      return {
+        label: "High Clinical Urgency (Level 1-2)",
+        color: "bg-rose-50 text-rose-700 border-rose-200",
+        indicator: "bg-rose-500",
+      };
+    }
+    if (norm === "moderate" || norm === "urgent" || (score && score >= 4)) {
+      return {
+        label: "Moderate Priority (Level 3)",
+        color: "bg-amber-50 text-amber-700 border-amber-200",
+        indicator: "bg-amber-500",
+      };
+    }
+    return {
+      label: "Routine / Low Urgency (Level 4-5)",
+      color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      indicator: "bg-emerald-500",
+    };
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      
-      {/* ================= MODERN HEADER ================= */}
-      <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-[1800px] mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  MedoSphere AI
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Clinical Triage Protocol Banner */}
+        <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Stethoscope className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-bold text-slate-900 leading-snug">
+                  Clinical AI Decision Support & Symptom Triage
                 </h1>
-                <p className="text-sm text-gray-500">Your Intelligent Healthcare Assistant</p>
+                <span className="text-[10px] font-semibold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded">
+                  Clinical Protocol v3.4
+                </span>
               </div>
+              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                Evaluates symptom severity, provides medical risk stratification, and recommends relevant outpatient specialties.
+              </p>
             </div>
+          </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-green-700">AI Online</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full">
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <span className="text-sm font-medium text-blue-700">Secure</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <span>Confidential Medical Triage</span>
           </div>
         </div>
-      </div>
 
-      {/* ================= MAIN GRID ================= */}
-      <div className="max-w-[1800px] mx-auto px-6 py-8">
-        <div className="grid grid-cols-12 gap-6">
+        {/* ================= MAIN INTERFACE GRID ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Clinical Feed (8 Cols) */}
+          <div className="lg:col-span-8 flex flex-col bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden h-[680px]">
+            {/* Patient Demographics Strip */}
+            <div className="p-3 border-b border-slate-100 bg-slate-50/80 flex items-center justify-between gap-4 text-xs">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Patient Parameters:
+                </span>
 
-          {/* ================= LEFT SIDEBAR ================= */}
-          <div className="col-span-3 space-y-6">
-            
-            {/* Consultations Card */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
-                <h2 className="text-white font-semibold text-lg flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Recent Consultations
-                </h2>
-              </div>
-              <div className="p-6">
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-500 text-sm">No consultations yet</p>
-                  <p className="text-gray-400 text-xs mt-1">Start a conversation to begin</p>
+                <div className="flex items-center gap-2">
+                  <label className="text-slate-600">Age:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="110"
+                    value={age}
+                    onChange={(e) => setAge(e.target.value ? Number(e.target.value) : "")}
+                    className="w-16 h-7 text-xs px-2 rounded border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-sky-600 font-mono text-slate-800"
+                  />
                 </div>
-              </div>
-            </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">{history.length}</div>
-                <div className="text-xs opacity-90">Total Queries</div>
-              </div>
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">24/7</div>
-                <div className="text-xs opacity-90">AI Available</div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* ================= CENTER CHAT ================= */}
-          <div className="col-span-6">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col h-[calc(100vh-180px)]">
-
-              {/* Chat Header */}
-              <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">Dr. AI Assistant</h3>
-                    <p className="text-xs text-gray-500">Powered by Advanced Medical AI</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-slate-600">Gender:</label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="h-7 text-xs px-2 rounded border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-sky-600 text-slate-800"
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-                {messages.length === 0 && (
-                  <div className="text-center py-16">
-                    <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-                      <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Welcome to MedoSphere AI</h3>
-                    <p className="text-gray-500 text-sm max-w-md mx-auto">
-                      Describe your symptoms and I'll provide an AI-powered health assessment. 
-                      Please fill in your age and gender below before starting.
-                    </p>
-                  </div>
-                )}
+              <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
+                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </div>
 
-                {messages.map((msg) => (
+            {/* Conversation Messages */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-50/40 clinical-scrollbar">
+              {messages.length === 0 && (
+                <div className="text-center py-16 px-4 space-y-3">
+                  <div className="w-12 h-12 rounded-lg bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center mx-auto">
+                    <Activity className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Clinical Symptom Evaluation Ready
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    Describe your symptoms, onset time, and any associated discomfort. The clinical triage model will calculate risk urgency and suggest appropriate medical care.
+                  </p>
+                  <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-xs">
+                    {[
+                      "Severe migraine with nausea since 2 hours",
+                      "Persistent dry cough and mild fever for 3 days",
+                      "Acute lower back pain after lifting weights",
+                    ].map((sample, sIdx) => (
+                      <button
+                        key={sIdx}
+                        onClick={() => setInputValue(sample)}
+                        className="text-[11px] px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-sky-300 hover:text-sky-700 transition-colors shadow-2xs"
+                      >
+                        "{sample}"
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {messages.map((msg) => {
+                const isUser = msg.role === "user";
+                const urgency = msg.urgencyLevel ? getUrgencyBadge(msg.urgencyLevel, msg.riskScore) : null;
+
+                return (
                   <div
                     key={msg.id}
-                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                    className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                   >
-                    <div className="flex items-start gap-2 max-w-[80%]">
-                      {msg.role === "assistant" && (
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
+                    <div className="flex items-start gap-2.5 max-w-[85%]">
+                      {!isUser && (
+                        <div className="w-8 h-8 rounded-lg bg-sky-700 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5 shadow-sm">
+                          <Stethoscope className="h-4 w-4" />
                         </div>
                       )}
-                      
-                      <div>
+
+                      <div className="space-y-1.5">
                         <div
-                          className={`px-5 py-3 rounded-2xl ${
-                            msg.role === "user"
-                              ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
-                              : "bg-white border border-gray-200 shadow-sm"
+                          className={`p-4 rounded-lg text-xs leading-relaxed ${
+                            isUser
+                              ? "bg-sky-700 text-white shadow-sm"
+                              : "bg-white border border-slate-200 text-slate-800 shadow-sm"
                           }`}
                         >
-                          <p className={`text-sm leading-relaxed ${msg.role === "user" ? "text-white" : "text-gray-800"}`}>
-                            {msg.content}
-                          </p>
+                          <p className="whitespace-pre-wrap">{msg.content}</p>
 
-                          {msg.riskScore !== undefined && (
-                            <div className="mt-3 pt-3 border-t border-gray-100">
+                          {/* Structured Clinical Triage Card */}
+                          {!isUser && urgency && (
+                            <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-medium text-gray-600">Risk Assessment</span>
-                                <span className={`text-xs font-bold px-3 py-1 rounded-full ${getRiskColor(msg.riskScore)}`}>
-                                  {msg.riskScore}/10
+                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border inline-flex items-center gap-1.5 ${urgency.color}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${urgency.indicator}`}></span>
+                                  {urgency.label}
                                 </span>
+                                {msg.riskScore !== undefined && (
+                                  <span className="text-[11px] font-mono font-bold text-slate-700">
+                                    Risk Score: {msg.riskScore}/10
+                                  </span>
+                                )}
                               </div>
+
+                              {msg.category && (
+                                <p className="text-[11px] text-slate-600">
+                                  <strong>Category:</strong> {msg.category}
+                                </p>
+                              )}
+
+                              {msg.department && (
+                                <div className="p-2 rounded bg-sky-50 border border-sky-100 flex items-center justify-between text-[11px] text-sky-900 mt-2">
+                                  <span>Recommended: <strong>{msg.department}</strong></span>
+                                  <Link
+                                    to="/book-opd"
+                                    className="font-semibold text-sky-700 hover:underline flex items-center gap-1"
+                                  >
+                                    Book OPD →
+                                  </Link>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
-                        
-                        <p className="text-xs text-gray-400 mt-1 px-2">
-                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+                        <p className={`text-[10px] text-slate-400 ${isUser ? "text-right" : "text-left"} px-1`}>
+                          {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
 
-                      {msg.role === "user" && (
-                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
+                      {isUser && (
+                        <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+                          <User className="h-4 w-4" />
                         </div>
                       )}
                     </div>
                   </div>
-                ))}
+                );
+              })}
 
-                {loading && (
-                  <div className="flex justify-start">
-                    <div className="flex items-start gap-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div className="bg-white border border-gray-200 rounded-2xl px-5 py-3 shadow-sm">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        </div>
-                      </div>
+              {loading && (
+                <div className="flex justify-start">
+                  <div className="flex items-center gap-2.5 max-w-[85%]">
+                    <div className="w-8 h-8 rounded-lg bg-sky-700 text-white flex items-center justify-center flex-shrink-0">
+                      <Stethoscope className="h-4 w-4" />
+                    </div>
+                    <div className="p-3.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-500 flex items-center gap-2 shadow-sm">
+                      <div className="w-3.5 h-3.5 border-2 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span>Evaluating clinical triage model against ICD-10 protocols...</span>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* Patient Info Section */}
-              <div className="p-4 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Patient Information
-                  </div>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Age Input */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Age</label>
-                    <input
-                      type="number"
-                      value={age}
-                      onChange={(e) => setAge(e.target.value ? Number(e.target.value) : "")}
-                      placeholder="Enter age"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      min="0"
-                      max="120"
-                    />
-                  </div>
+              )}
+            </div>
 
-                  {/* Gender Select */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">Gender</label>
-                    <select
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all appearance-none bg-white"
-                    >
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                </div>
+            {/* Input Bar */}
+            <div className="p-3 border-t border-slate-200 bg-white">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Describe patient symptoms (e.g. sharp headache, chest tightness, fever, duration)..."
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !loading && handleSendMessage()}
+                  disabled={loading}
+                  className="flex-1 px-3.5 py-2 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-sky-600 text-slate-900 placeholder:text-slate-400 bg-slate-50 focus:bg-white"
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={loading || !inputValue.trim()}
+                  className="bg-sky-700 hover:bg-sky-800 text-white text-xs h-9 px-4 rounded-md shadow-sm"
+                >
+                  <Send className="h-3.5 w-3.5 mr-1" />
+                  <span>Evaluate</span>
+                </Button>
               </div>
-
-              {/* Input Area */}
-              <div className="p-4 border-t border-gray-200 bg-white">
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="Describe your symptoms in detail..."
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !loading && handleSendMessage()}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    disabled={loading}
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={loading || !inputValue.trim()}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Analyzing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Send</span>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
+              <p className="text-[10px] text-slate-400 text-center mt-2">
+                Clinical decision support only. In case of acute emergency, dial 102/108 immediately.
+              </p>
             </div>
           </div>
 
-          {/* ================= RIGHT SIDEBAR ================= */}
-          <div className="col-span-3 space-y-6">
-
-            {/* Latest Assessment */}
-            {result && (
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-5">
-                  <h3 className="text-white font-semibold flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Latest Assessment
-                  </h3>
+          {/* Side Panel: Assessment Summary & Triage History (4 Cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Active Triage Findings */}
+            {result ? (
+              <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Triage Analysis Summary
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">Just Now</span>
                 </div>
 
-                <div className="p-5 space-y-4">
-                  {result.urgency_level === "high" && (
-                    <div className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 p-4 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div>
-                          <p className="font-semibold text-red-900 text-sm">High Urgency</p>
-                          <p className="text-xs text-red-700 mt-1">Seek immediate medical attention</p>
-                        </div>
-                      </div>
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 rounded-md bg-slate-50 border border-slate-100 space-y-1">
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold">Classification</span>
+                    <p className="font-bold text-slate-900 text-sm">{result.condition_category || "General Clinical"}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between p-2.5 rounded-md bg-slate-50 border border-slate-100">
+                    <span className="text-slate-600">Calculated Risk Score</span>
+                    <span className="font-bold font-mono text-slate-900 text-sm">
+                      {result.risk_score || "4"}/10
+                    </span>
+                  </div>
+
+                  {result.recommended_department && (
+                    <div className="p-3 rounded-md bg-sky-50 border border-sky-100 space-y-2">
+                      <span className="text-[10px] text-sky-800 uppercase font-semibold">Recommended Specialty</span>
+                      <p className="font-bold text-sky-950 text-sm">{result.recommended_department}</p>
+                      <Button asChild size="sm" className="w-full bg-sky-700 hover:bg-sky-800 text-white text-xs h-8">
+                        <Link to="/book-opd">Book Department Appointment</Link>
+                      </Button>
                     </div>
                   )}
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm text-gray-600">Category</span>
-                      <span className="text-sm font-semibold text-gray-800">{result.condition_category}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm text-gray-600">Risk Level</span>
-                      <span className={`text-sm font-bold px-3 py-1 rounded-full ${getRiskColor(result.risk_score)}`}>
-                        {result.risk_score}/10
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <span className="text-sm text-gray-600">Consultation</span>
-                      <span className="text-sm font-semibold text-gray-800 text-right">{result.recommended_consultation_type}</span>
-                    </div>
-                  </div>
                 </div>
+              </div>
+            ) : (
+              <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-2 text-center">
+                <Info className="h-6 w-6 text-slate-400 mx-auto" />
+                <h4 className="text-xs font-bold text-slate-900">Awaiting Clinical Input</h4>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Enter your current symptoms in the dialogue panel to generate structured risk scores and department recommendations.
+                </p>
               </div>
             )}
 
-            {/* Medical History */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-green-600 to-teal-600 p-5">
-                <h3 className="text-white font-semibold flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Medical History
-                </h3>
+            {/* Historical Triage Log */}
+            <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  <History className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Previous Triage Logs</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-500">{history.length}</span>
               </div>
 
-              <div className="p-5 space-y-3 max-h-80 overflow-y-auto">
-                {history.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-3 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <p className="text-sm text-gray-500">No history yet</p>
-                  </div>
-                ) : (
-                  history.slice(0, 5).map((item, index) => (
-                    <div key={index} className="border border-gray-200 p-4 rounded-xl hover:shadow-md transition-shadow bg-gray-50">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-gray-500">
-                          {new Date(item.createdAt).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
+              {history.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">No past evaluations recorded.</p>
+              ) : (
+                <div className="space-y-2 max-h-56 overflow-y-auto clinical-scrollbar">
+                  {history.slice(0, 5).map((item, idx) => (
+                    <div
+                      key={item._id || idx}
+                      className="p-2.5 rounded-md border border-slate-100 bg-slate-50 hover:bg-slate-100/60 transition-colors text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-800 truncate max-w-[140px]">
+                          {item.symptoms || "Clinical Query"}
                         </span>
-                        {item.result?.risk_score && (
-                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${getRiskColor(item.result.risk_score)}`}>
-                            {getRiskBadge(item.result.risk_score).text}
-                          </span>
-                        )}
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) : "Logged"}
+                        </span>
                       </div>
-                      <p className="text-sm text-gray-700 line-clamp-2 mb-2">
-                        <strong className="text-gray-900">Symptoms:</strong> {item.symptoms}
-                      </p>
-                      {item.result?.risk_score && (
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                            <div 
-                              className={`h-1.5 rounded-full ${getRiskBadge(item.result.risk_score).color}`}
-                              style={{ width: `${(item.result.risk_score / 10) * 100}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-xs font-semibold text-gray-600">{item.result.risk_score}/10</span>
-                        </div>
+                      {item.result?.condition_category && (
+                        <p className="text-[10px] text-slate-500 mt-1 truncate">
+                          {item.result.condition_category}
+                        </p>
                       )}
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-orange-600 to-red-600 p-5">
-                <h3 className="text-white font-semibold flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Quick Actions
-                </h3>
+            {/* Emergency Hospital Helpline */}
+            <div className="p-4 rounded-lg bg-slate-900 text-white space-y-2 border border-slate-800">
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-sky-400" />
+                <span className="text-xs font-bold uppercase tracking-wider">Critical Care Help</span>
               </div>
-
-              <div className="p-5 space-y-3">
-                <button
-                  onClick={() => (window.location.href = "/consult")}
-                  className="w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 rounded-xl font-medium hover:from-green-700 hover:to-teal-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Book Appointment
-                </button>
-                
-                <button
-                  onClick={() => (window.location.href = "/hospitals")}
-                  className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white py-3 rounded-xl font-medium hover:from-red-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                  Find Hospitals
-                </button>
-
-                <button className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                  Health Resources
-                </button>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                National Ambulance & Trauma Hotline available 24 hours.
+              </p>
+              <div className="pt-1 font-mono text-sm font-bold text-sky-400">
+                102 (Ambulance) • 108 (Disaster)
               </div>
             </div>
-
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

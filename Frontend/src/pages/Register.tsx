@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Heart,
+  Activity,
   Mail,
   Lock,
   Eye,
@@ -13,8 +13,8 @@ import {
   Phone,
   ShieldCheck,
   CheckCircle2,
-  Activity,
-  ChevronRight,
+  AlertCircle,
+  LockKeyhole
 } from "lucide-react";
 
 import { registerUser, loginUser } from "@/api/auth.api";
@@ -47,7 +47,7 @@ const Register = () => {
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError("Passwords do not match. Please verify.");
       setIsLoading(false);
       return;
     }
@@ -66,193 +66,228 @@ const Register = () => {
       });
 
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
       await refetchUser();
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed. Try again.");
+      setError(err.response?.data?.message || "Registration failed. Please check details and try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#F8FAFC] overflow-hidden font-sans">
-      
-      {/* --- LEFT SIDE: ARTISTIC SHOWCASE (40%) --- */}
-      <div className="hidden lg:flex lg:w-[40%] relative bg-[#0F172A] p-12 flex-col justify-between overflow-hidden">
-        {/* Abstract Background Shapes */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-5%] left-[-5%] w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[100px]" />
-        </div>
-
-        {/* Logo Section */}
-        <div className="relative z-10 flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-500/30">
-            <Heart className="h-5 w-5 text-white fill-white/20" />
-          </div>
-          <span className="text-xl font-bold text-white tracking-tight">
-            Medo<span className="text-blue-400">sphere</span>
-          </span>
-        </div>
-
-        {/* Content Section */}
+    <div className="min-h-screen w-full flex bg-slate-50 font-sans text-slate-800">
+      {/* Left Feature Showcase (Desktop) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden border-r border-slate-800">
         <div className="relative z-10">
-          <h2 className="text-4xl font-semibold text-white leading-tight mb-6">
-            The next generation of <br />
-            <span className="text-blue-400">patient care.</span>
-          </h2>
-          
-          <div className="space-y-4 mb-12">
-             {[
-              { icon: <Activity className="w-5 h-5" />, title: "Live Queueing", color: "text-blue-400" },
-              { icon: <ShieldCheck className="w-5 h-5" />, title: "HIPAA Compliant", color: "text-emerald-400" },
-              { icon: <CheckCircle2 className="w-5 h-5" />, title: "Instant Tokens", color: "text-purple-400" }
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3 text-slate-300 bg-white/5 backdrop-blur-md border border-white/10 p-3 rounded-xl w-fit pr-8">
-                <span className={item.color}>{item.icon}</span>
-                <span className="text-sm font-medium">{item.title}</span>
-              </div>
-            ))}
-          </div>
+          <Link to="/" className="inline-flex items-center gap-2.5 text-white group">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-600 shadow-sm text-white">
+              <Activity className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="text-lg font-bold tracking-tight">MedoSphere</span>
+              <span className="text-[10px] text-sky-400 block font-medium uppercase tracking-wider">Clinical Health Network</span>
+            </div>
+          </Link>
         </div>
 
-        {/* Bottom Quote/Testimonial */}
-        <div className="relative z-10 border-t border-white/10 pt-8">
-          <p className="text-slate-400 text-sm italic italic mb-4">
-            "Medosphere has completely transformed how our family manages appointments. No more long wait times in cold hallways."
+        <div className="relative z-10 max-w-lg space-y-6 my-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-sky-300">
+            <ShieldCheck className="h-4 w-4 text-sky-400" />
+            <span>Digital Patient Onboarding</span>
+          </div>
+
+          <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight leading-snug">
+            Create Your Centralized Clinical Health Profile
+          </h2>
+
+          <p className="text-sm text-slate-300 leading-relaxed">
+            Register once to access digital OPD appointment scheduling across hundreds of hospitals, live queue tracking, and secure lifetime electronic health records.
           </p>
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-slate-700 border border-white/20" />
-            <div>
-              <p className="text-white text-xs font-bold">Dr. Sarah Jenkins</p>
-              <p className="text-slate-500 text-[10px]">Chief Medical Officer</p>
+
+          <div className="space-y-3.5 pt-4 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded bg-sky-950 border border-sky-800 text-sky-400 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+              <span className="text-slate-300">Instant digital OPD token confirmation with SMS alerts</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded bg-sky-950 border border-sky-800 text-sky-400 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+              <span className="text-slate-300">Secure WebRTC tele-consultations with certified doctors</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded bg-sky-950 border border-sky-800 text-sky-400 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+              <span className="text-slate-300">Encrypted cloud repository for all diagnostic reports</span>
             </div>
           </div>
+        </div>
+
+        <div className="relative z-10 pt-8 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>ABDM & HIPAA Privacy Guard</span>
+          <span>Helpline: 1800-11-4477</span>
         </div>
       </div>
 
-      {/* --- RIGHT SIDE: CLEAN FORM (60%) --- */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative">
-        
-        {/* Back Link */}
-        <Link
-          to="/"
-          className="absolute top-8 left-8 inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-all group"
-        >
-          <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-          Back to Portal
-        </Link>
+      {/* Right Registration Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
+        <div className="w-full max-w-md space-y-6 my-auto">
+          {/* Back link */}
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to Portal Home</span>
+          </Link>
 
-        <div className="max-w-[440px] w-full">
-          <div className="mb-8 text-center lg:text-left">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Create your account</h1>
-            <p className="text-slate-500 text-sm">Join the network and start managing your health journey today.</p>
+          {/* Form Header */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 lg:hidden mb-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-700 text-white">
+                <Activity className="h-4 w-4" />
+              </div>
+              <span className="text-base font-bold text-slate-900">MedoSphere</span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Register Patient Profile
+            </h1>
+            <p className="text-xs text-slate-500">
+              Provide your details to initiate your digital health profile.
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-xs font-semibold rounded-xl flex items-center gap-2">
-                <ShieldCheck size={14} />
-                {error}
-              </div>
-            )}
+          {/* Error Message */}
+          {error && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
 
-            <div className="grid grid-cols-1 gap-4">
-              {/* Name Field */}
-              <div className="space-y-1.5">
-                <label className="text-[13px] font-semibold text-slate-700 ml-1">Full Name</label>
-                <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                  <Input name="name" placeholder="John Doe" onChange={handleChange} className="pl-11 h-12 rounded-xl border-slate-200 bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" required />
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="e.g. Ramesh Kumar"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="pl-9 h-10 text-xs border-slate-200 focus-visible:ring-sky-600 rounded-md bg-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="patient@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="pl-9 h-10 text-xs border-slate-200 focus-visible:ring-sky-600 rounded-md bg-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Input
+                  type="tel"
+                  name="phone"
+                  required
+                  placeholder="+91 98765 43210"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="pl-9 h-10 text-xs border-slate-200 focus-visible:ring-sky-600 rounded-md bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <LockKeyhole className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    required
+                    placeholder="Min 6 chars"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="pl-9 pr-8 h-10 text-xs border-slate-200 focus-visible:ring-sky-600 rounded-md bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+                    aria-label="Toggle password"
+                  >
+                    {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
                 </div>
               </div>
 
-              {/* Email and Phone Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[13px] font-semibold text-slate-700 ml-1">Email</label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                    <Input name="email" type="email" placeholder="name@example.com" onChange={handleChange} className="pl-11 h-12 rounded-xl border-slate-200 bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" required />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[13px] font-semibold text-slate-700 ml-1">Phone</label>
-                  <div className="relative group">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                    <Input name="phone" placeholder="+1 (555) 000" onChange={handleChange} className="pl-11 h-12 rounded-xl border-slate-200 bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" required />
-                  </div>
-                </div>
-              </div>
-
-              {/* Password Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[13px] font-semibold text-slate-700 ml-1">Password</label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                    <Input 
-                      name="password" 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      onChange={handleChange} 
-                      className="pl-11 h-12 rounded-xl border-slate-200 bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" 
-                      required 
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[13px] font-semibold text-slate-700 ml-1">Confirm</label>
-                  <div className="relative group">
-                    <Input 
-                      name="confirmPassword" 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      onChange={handleChange} 
-                      className="pl-4 pr-11 h-12 rounded-xl border-slate-200 bg-white focus:ring-4 focus:ring-blue-500/5 transition-all" 
-                      required 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <LockKeyhole className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    required
+                    placeholder="Repeat password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="pl-9 h-10 text-xs border-slate-200 focus-visible:ring-sky-600 rounded-md bg-white"
+                  />
                 </div>
               </div>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-lg shadow-blue-500/20 transition-all duration-300 mt-2"
+            <Button
+              type="submit"
               disabled={isLoading}
+              className="w-full h-10 bg-sky-700 hover:bg-sky-800 text-white font-semibold text-xs rounded-md shadow-sm transition-all mt-3"
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating Account...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  Get Started <ChevronRight size={16} />
-                </div>
-              )}
+              {isLoading ? "Creating Patient Profile..." : "Register Clinical Account"}
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-slate-500 text-sm">
-            Already have an account?{" "}
-            <Link to="/login" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">
-              Log In
-            </Link>
-          </p>
-
-          <div className="mt-12 text-center">
-            <p className="text-[11px] text-slate-400 leading-relaxed uppercase tracking-widest font-bold">
-              Secure 256-bit SSL Encryption
+          {/* Login prompt */}
+          <div className="p-3.5 rounded-lg bg-slate-100 border border-slate-200 text-center text-xs">
+            <p className="text-slate-600">
+              Already have a patient profile?{" "}
+              <Link to="/login" className="font-semibold text-sky-700 hover:underline">
+                Sign In
+              </Link>
             </p>
           </div>
         </div>

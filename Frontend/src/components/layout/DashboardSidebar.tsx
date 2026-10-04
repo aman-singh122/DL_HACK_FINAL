@@ -1,299 +1,244 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   CalendarPlus,
   Video,
   FileText,
-  MessageCircle,
+  MessageSquare,
   LogOut,
-  Heart,
+  Activity,
   User,
   Clock,
   Building2,
   Stethoscope,
   ChevronRight,
-  Sparkles,
-  Activity,
-  Bell,
+  ShieldCheck,
+  X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
 
-const DashboardSidebar = () => {
+interface DashboardSidebarProps {
+  collapsed?: boolean;
+  onCloseMobile?: () => void;
+}
+
+const DashboardSidebar = ({ collapsed = false, onCloseMobile }: DashboardSidebarProps) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [liveQueueAlert, setLiveQueueAlert] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-  const [activeGlow, setActiveGlow] = useState("");
+  const { user, logout } = useAuth();
 
-  // Simulate live queue notification
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (location.pathname !== "/live-queue/QUEUE_1") {
-        setLiveQueueAlert(true);
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
-
-  const menuItems = [
+  const menuGroups = [
     {
-      name: "Dashboard",
-      path: "/dashboard",
-      icon: LayoutDashboard,
-      color: "from-blue-500 to-blue-600",
-      gradient: "bg-gradient-to-r from-blue-500 to-blue-600",
-      notification: 2,
+      group: "Clinical Care",
+      items: [
+        {
+          name: "Overview",
+          path: "/dashboard",
+          icon: LayoutDashboard,
+        },
+        {
+          name: "Book OPD",
+          path: "/book-opd",
+          icon: CalendarPlus,
+        },
+        {
+          name: "Tele-Consultation",
+          path: "/consult",
+          icon: Video,
+          badge: "Virtual",
+        },
+        {
+          name: "My Appointments",
+          path: "/appointments",
+          icon: Clock,
+        },
+        {
+          name: "Live OPD Queue",
+          path: "/live-queue/QUEUE_1",
+          icon: Activity,
+          badge: "Live",
+        },
+      ],
     },
     {
-      name: "Book OPD",
-      path: "/book-opd",
-      icon: CalendarPlus,
-      color: "from-emerald-500 to-emerald-600",
-      gradient: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+      group: "Health Network",
+      items: [
+        {
+          name: "Hospitals Network",
+          path: "/hospitals",
+          icon: Building2,
+        },
+        {
+          name: "Clinical Specialists",
+          path: "/doctors",
+          icon: Stethoscope,
+        },
+        {
+          name: "Medical Records (EHR)",
+          path: "/records",
+          icon: FileText,
+        },
+      ],
     },
     {
-      name: "Consult Online",
-      path: "/consult",
-      icon: Video,
-      color: "from-purple-500 to-purple-600",
-      gradient: "bg-gradient-to-r from-purple-500 to-purple-600",
-      badge: "NEW",
-    },
-    {
-      name: "My Appointments",
-      path: "/appointments",
-      icon: Clock,
-      color: "from-amber-500 to-amber-600",
-      gradient: "bg-gradient-to-r from-amber-500 to-amber-600",
-      notification: 3,
-    },
-    {
-      name: "Live Queue",
-      path: "/live-queue/QUEUE_1",
-      icon: Activity,
-      color: "from-red-500 to-red-600",
-      gradient: "bg-gradient-to-r from-red-500 to-red-600",
-      alert: liveQueueAlert,
-    },
-    {
-      name: "Hospitals",
-      path: "/hospitals",
-      icon: Building2,
-      color: "from-cyan-500 to-cyan-600",
-      gradient: "bg-gradient-to-r from-cyan-500 to-cyan-600",
-    },
-    {
-      name: "Doctors",
-      path: "/doctors",
-      icon: Stethoscope,
-      color: "from-green-500 to-green-600",
-      gradient: "bg-gradient-to-r from-green-500 to-green-600",
-    },
-    {
-      name: "Medical Records",
-      path: "/records",
-      icon: FileText,
-      color: "from-indigo-500 to-indigo-600",
-      gradient: "bg-gradient-to-r from-indigo-500 to-indigo-600",
-    },
-    {
-      name: "MediChat",
-      path: "/medichat",
-      icon: MessageCircle,
-      color: "from-pink-500 to-pink-600",
-      gradient: "bg-gradient-to-r from-pink-500 to-pink-600",
-      notification: 5,
+      group: "Decision Support",
+      items: [
+        {
+          name: "Clinical AI Triage",
+          path: "/medichat",
+          icon: MessageSquare,
+          badge: "Assist",
+        },
+      ],
     },
   ];
 
-  const isActive = (path: string) => 
+  const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + "/");
 
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
-
-  const handleItemClick = (path: string, color: string) => {
-    setActiveGlow(color);
-    if (path.includes("live-queue")) setLiveQueueAlert(false);
-    setTimeout(() => setActiveGlow(""), 500);
-  };
-
   return (
-    <>
-      {/* Collapse Toggle */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className={`fixed top-6 z-50 transition-all duration-300 ${
-          collapsed ? "left-4" : "left-60"
-        }`}
-      >
-        <div className="h-8 w-8 rounded-full bg-white shadow-lg flex items-center justify-center hover:shadow-xl">
-          <ChevronRight className={`h-4 w-4 transition-transform ${collapsed ? "" : "rotate-180"}`} />
-        </div>
-      </button>
-
-      <aside className={`fixed left-0 top-0 z-40 h-screen flex flex-col bg-white border-r border-gray-200 shadow-2xl transition-all duration-500 ease-out ${collapsed ? "w-20" : "w-64"}`}>
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-100 flex items-center justify-center">
-          <Link to="/dashboard" className="group relative">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-              <Heart className="h-6 w-6 text-white" />
-              <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
-            </div>
-            {!collapsed && (
-              <div className="absolute left-14 top-2 whitespace-nowrap">
-                <h1 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-blue-600 bg-clip-text text-transparent">
-                  MedoSphere
-                </h1>
-                <p className="text-[10px] text-gray-500">Premium Healthcare</p>
-              </div>
-            )}
-          </Link>
-        </div>
-
-        {/* User Card */}
-        <div className="p-4 border-b border-gray-100">
-          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3 p-3"} rounded-xl bg-gray-50`}>
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-md relative">
-              <User className="text-white h-5 w-5" />
-              <div className="absolute -top-1 -right-1 h-3 w-3 bg-emerald-500 rounded-full border-2 border-white"></div>
-            </div>
-            {!collapsed && (
-              <div className="flex-1 overflow-hidden">
-                <p className="font-semibold text-sm truncate">{user?.name || "Patient User"}</p>
-                <p className="text-xs text-gray-500">Patient Account</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="h-1.5 flex-1 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full w-4/5 bg-emerald-500 rounded-full animate-pulse"></div>
-                  </div>
-                  <span className="text-xs text-emerald-600 font-medium">85%</span>
-                </div>
-              </div>
-            )}
+    <aside
+      className={`h-full flex flex-col bg-slate-900 text-slate-300 border-r border-slate-800 select-none transition-all duration-300 ${
+        collapsed ? "w-20" : "w-64"
+      }`}
+    >
+      {/* Brand Header */}
+      <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800 bg-slate-950/40">
+        <Link to="/dashboard" className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-600 text-white shadow-sm flex-shrink-0">
+            <Activity className="h-5 w-5" />
           </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.path);
-            const showNotification = item.notification || item.alert;
-
-            return (
-              <Link
-                key={item.name}
-                to={item.path}
-                onClick={() => handleItemClick(item.path, item.gradient)}
-                className={`group relative flex items-center ${
-                  collapsed ? "justify-center px-3" : "px-4 gap-3"
-                } py-3 rounded-xl text-sm font-medium transition-all duration-300 hover:scale-[1.02] ${
-                  active 
-                    ? "text-white shadow-xl scale-[1.02]" 
-                    : "text-gray-700 hover:bg-gray-50 hover:shadow-lg"
-                }`}
-                onMouseEnter={() => setHoveredItem(item.name)}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                {/* Active Glow Effect */}
-                {active && (
-                  <>
-                    <div className={`absolute inset-0 ${item.gradient} rounded-xl opacity-100`} />
-                    <div className={`absolute inset-0 ${item.gradient} opacity-30 blur-xl rounded-xl -z-10 animate-pulse`} />
-                  </>
-                )}
-
-                {/* Hover Gradient Overlay */}
-                {hoveredItem === item.name && !active && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-white rounded-xl opacity-50" />
-                )}
-
-                {/* Icon Container */}
-                <div className={`relative z-10 p-2 rounded-lg transition-all ${
-                  active ? "bg-white/20" : "bg-gray-100 group-hover:bg-white"
-                }`}>
-                  <Icon className={`h-4 w-4 ${active ? "text-white" : "text-gray-600"}`} />
-                  
-                  {/* Notifications */}
-                  {showNotification && (
-                    <div className={`absolute -top-1 -right-1 h-4 w-4 rounded-full flex items-center justify-center ${
-                      item.alert ? "bg-red-500 animate-ping" : "bg-blue-500"
-                    }`}>
-                      {item.alert ? (
-                        <Bell className="h-2 w-2 text-white" />
-                      ) : (
-                        <span className="text-[10px] text-white">{item.notification}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Text & Badge */}
-                {!collapsed && (
-                  <>
-                    <span className="relative z-10 flex-1 truncate">{item.name}</span>
-                    {item.badge && (
-                      <span className="px-1.5 py-0.5 text-[10px] bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
-                    <ChevronRight className={`h-4 w-4 transition-transform ${
-                      active ? "text-white translate-x-1" : "text-gray-400 group-hover:translate-x-1"
-                    }`} />
-                  </>
-                )}
-
-                {/* Collapsed Tooltip */}
-                {collapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    {item.name}
-                    {showNotification && <span className="ml-1">•</span>}
-                  </div>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Logout & Footer */}
-        <div className="p-4 border-t border-gray-100">
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center ${
-              collapsed ? "justify-center px-3" : "px-4 gap-3"
-            } py-3 rounded-xl text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all hover:scale-[1.02] group`}
-          >
-            <LogOut className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-            {!collapsed && <span>Logout</span>}
-          </button>
-
           {!collapsed && (
-            <div className="mt-4 text-center space-y-1">
-              <p className="text-xs text-gray-500">Secure • Encrypted • HIPAA</p>
-              <p className="text-[10px] text-gray-400">v2.1.4 • Active Now</p>
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                <div className="h-1.5 w-1.5 bg-blue-500 rounded-full animate-pulse delay-100"></div>
-                <div className="h-1.5 w-1.5 bg-purple-500 rounded-full animate-pulse delay-200"></div>
-              </div>
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-base font-bold text-white tracking-tight leading-none truncate">
+                Medo<span className="text-sky-400">Sphere</span>
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 tracking-wider uppercase mt-1">
+                Patient Clinical Portal
+              </span>
             </div>
           )}
-        </div>
-      </aside>
+        </Link>
 
-      {/* Glow Animation Container */}
-      <div className={`fixed inset-0 pointer-events-none z-30 transition-opacity duration-500 ${
-        activeGlow ? "opacity-100" : "opacity-0"
-      }`}>
-        <div className={`absolute top-0 left-64 w-32 h-32 ${activeGlow} opacity-20 blur-3xl`} />
+        {onCloseMobile && (
+          <button
+            onClick={onCloseMobile}
+            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 lg:hidden"
+            aria-label="Close sidebar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
-    </>
+
+      {/* Patient Profile Card */}
+      {!collapsed && (
+        <div className="p-3.5 border-b border-slate-800/80 bg-slate-800/30">
+          <div className="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50">
+            <div className="h-9 w-9 rounded-full bg-sky-950 border border-sky-600 text-sky-300 flex items-center justify-center font-bold text-sm flex-shrink-0">
+              {user?.name ? user.name.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="font-semibold text-xs text-white truncate">
+                  {user?.name || "Registered Patient"}
+                </p>
+                <ShieldCheck className="h-3.5 w-3.5 text-sky-400 flex-shrink-0" />
+              </div>
+              <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                {user?.email || "patient@medosphere.org"}
+              </p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider">
+                  Verified Patient
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Groups */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 clinical-scrollbar">
+        {menuGroups.map((group) => (
+          <div key={group.group} className="space-y-1">
+            {!collapsed && (
+              <p className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                {group.group}
+              </p>
+            )}
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => onCloseMobile && onCloseMobile()}
+                  className={`group relative flex items-center ${
+                    collapsed ? "justify-center px-2" : "px-3 gap-3"
+                  } py-2.5 rounded-md text-xs font-medium transition-all ${
+                    active
+                      ? "bg-sky-600 text-white shadow-sm font-semibold"
+                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/80"
+                  }`}
+                  title={collapsed ? item.name : undefined}
+                >
+                  <Icon
+                    className={`h-4 w-4 flex-shrink-0 transition-colors ${
+                      active ? "text-white" : "text-slate-400 group-hover:text-slate-200"
+                    }`}
+                  />
+
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 truncate">{item.name}</span>
+                      {item.badge && (
+                        <span
+                          className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                            active
+                              ? "bg-sky-700 text-white"
+                              : "bg-slate-800 text-slate-300 border border-slate-700"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                      <ChevronRight
+                        className={`h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity ${
+                          active ? "opacity-100 text-white" : "text-slate-500"
+                        }`}
+                      />
+                    </>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer & Logout */}
+      <div className="p-3 border-t border-slate-800 bg-slate-950/40">
+        <button
+          onClick={() => logout()}
+          className={`w-full flex items-center ${
+            collapsed ? "justify-center px-2" : "px-3 gap-2.5"
+          } py-2 rounded-md text-xs font-medium text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors group`}
+        >
+          <LogOut className="h-4 w-4 text-slate-400 group-hover:text-rose-400 transition-colors" />
+          {!collapsed && <span>Sign Out Session</span>}
+        </button>
+
+        {!collapsed && (
+          <div className="mt-2.5 px-3 py-1.5 rounded bg-slate-900/80 border border-slate-800/80 text-[10px] text-slate-400 flex items-center justify-between">
+            <span>HIPAA • ABDM Encrypted</span>
+            <span className="text-slate-500 font-mono">v3.2</span>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 };
 

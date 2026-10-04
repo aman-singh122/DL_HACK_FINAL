@@ -6,8 +6,6 @@ import HospitalNavbar from "../components/HospitalNavbar";
 import HospitalSidebar from "../components/HospitalSidebar";
 import { getMyHospital } from "../api/hospital.api";
 
-
-/* ================= TYPES ================= */
 type Hospital = {
   _id: string;
   name: string;
@@ -20,7 +18,6 @@ const HospitalLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  /* ================= FETCH HOSPITAL PROFILE ================= */
   useEffect(() => {
     const fetchHospital = async () => {
       try {
@@ -37,19 +34,17 @@ const HospitalLayout = () => {
     fetchHospital();
   }, []);
 
-  /* ================= AUTO-CLOSE MOBILE MENU ================= */
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  /* ================= LOADING STATE ================= */
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-sm font-medium text-slate-500">
-            Loading Dashboard...
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-sky-700" />
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Initializing Hospital Clinical Console...
           </p>
         </div>
       </div>
@@ -58,41 +53,33 @@ const HospitalLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      
-      {/* ================= SIDEBAR (DESKTOP) ================= */}
-      <div className="hidden md:block">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block w-64 flex-shrink-0 h-full">
         <HospitalSidebar />
       </div>
 
-      {/* ================= SIDEBAR (MOBILE) ================= */}
+      {/* Mobile Drawer */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
-          {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          {/* Sidebar */}
-          <div className="relative h-full w-64 bg-slate-900 shadow-xl">
+          <div className="relative h-full w-64 bg-slate-900 shadow-2xl animate-in slide-in-from-left duration-200">
             <HospitalSidebar />
           </div>
         </div>
       )}
 
-      {/* ================= MAIN CONTENT ================= */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        
-        {/* Navbar */}
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <HospitalNavbar
           hospital={hospital}
-          onSidebarToggle={() =>
-            setIsMobileMenuOpen((prev) => !prev)
-          }
+          onSidebarToggle={() => setIsMobileMenuOpen((prev) => !prev)}
         />
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto max-w-7xl animate-in fade-in duration-300">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 clinical-scrollbar">
+          <div className="mx-auto max-w-7xl animate-in fade-in duration-200">
             <Outlet />
           </div>
         </main>
